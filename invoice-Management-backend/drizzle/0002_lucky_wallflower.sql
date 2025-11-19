@@ -1,0 +1,1 @@
+ALTER TABLE "my-invoicees" ALTER COLUMN "user_id" DROP NOT NULL;

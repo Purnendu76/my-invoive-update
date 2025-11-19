@@ -1,0 +1,1 @@
+-- ALTER TABLE "users_auth" ADD COLUMN "project_role" "my-project" NOT NULL;

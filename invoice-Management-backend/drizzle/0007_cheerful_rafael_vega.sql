@@ -1,0 +1,1 @@
+-- ALTER TABLE "users_auth" ALTER COLUMN "project_role" DROP DEFAULT;

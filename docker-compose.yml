@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password       # your actual password
+      POSTGRES_DB: my-invoice           # your DB name
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./invoice-Management-backend
+    volumes:
+      - ./invoice-Management-backend:/usr/src/app:delegated
+      - ./invoice-Management-backend/drizzle:/usr/src/app/drizzle:delegated
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://postgres:password@db:5432/my-invoice
+      PORT: 5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./invoice-Management
+    volumes:
+      - ./invoice-Management:/usr/src/app:delegated
+      # - /usr/src/app/node_modules
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+      # PORT: 5174
+    ports:
+      - "5173:5174"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data: {}
+

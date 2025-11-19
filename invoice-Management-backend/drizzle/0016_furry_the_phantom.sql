@@ -1,0 +1,6 @@
+-- ALTER TABLE "my-invoicees" ALTER COLUMN "project" SET DATA TYPE text;--> statement-breakpoint
+-- ALTER TABLE "users_auth" ALTER COLUMN "project_role" SET DATA TYPE text;--> statement-breakpoint
+-- DROP TYPE "public"."my-project";--> statement-breakpoint
+-- CREATE TYPE "public"."my-project" AS ENUM('NFS', 'GAIL', 'BGCL', 'STP', 'Bharat Net', 'NFS AMC');--> statement-breakpoint
+-- ALTER TABLE "my-invoicees" ALTER COLUMN "project" SET DATA TYPE "public"."my-project" USING "project"::"public"."my-project";--> statement-breakpoint
+-- ALTER TABLE "users_auth" ALTER COLUMN "project_role" SET DATA TYPE "public"."my-project" USING "project_role"::"public"."my-project";

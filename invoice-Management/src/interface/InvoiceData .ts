@@ -1,0 +1,33 @@
+interface InvoiceData {
+  project: string | null;
+  modeOfProject: string | null;
+  state: string | null;
+  mybillCategory: string | null;
+  milestone: string | null;
+  invoiceNumber: string;
+  invoiceDate: Date|string | null;
+  submissionDate: Date|string | null;
+  invoiceBasicAmount: number;
+  gstPercentage: string | null;
+  invoiceGstAmount: number;
+  totalAmount: number;
+  passedAmountByClient: number;
+  retention: number;
+  gstWithheld: number;
+  tds: number;
+  gstTds: number;
+  bocw: number;
+  lowDepthDeduction: number;
+  ld: number;
+  slaPenalty: number;
+  penalty: number;
+  otherDeduction: number;
+  totalDeduction: number;
+  netPayable: number;
+  status: string | null;
+  amountPaidByClient: number;
+  paymentDate: Date| string | null;
+  balance: number;
+  remarks: string;
+}
+export type { InvoiceData };

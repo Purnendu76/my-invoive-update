@@ -1,0 +1,2 @@
+-- ALTER TABLE "my-invoicees" ALTER COLUMN "user_id" SET NOT NULL;--> statement-breakpoint
+-- ALTER TABLE "my-invoicees" ADD CONSTRAINT "my-invoicees_user_id_users_auth_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_auth"("id") ON DELETE cascade ON UPDATE no action;

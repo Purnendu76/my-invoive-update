@@ -1,0 +1,2 @@
+-- ALTER TABLE "users_auth" ALTER COLUMN "project_role" SET DEFAULT '-';--> statement-breakpoint
+-- ALTER TABLE "users_auth" ALTER COLUMN "project_role" DROP NOT NULL;

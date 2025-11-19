@@ -1,0 +1,2 @@
+-- ALTER TABLE "users_auth" ADD COLUMN "project_role" "my-project";--> statement-breakpoint
+-- ALTER TABLE "users_auth" DROP COLUMN "project_rolee";

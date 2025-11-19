@@ -1,0 +1,4 @@
+-- CREATE TYPE "public"."gst_percentages" AS ENUM('5%', '12%', '18%');--> statement-breakpoint
+-- ALTER TABLE "my-invoicees" ADD COLUMN "gst_percentages" "gst_percentages" NOT NULL;--> statement-breakpoint
+-- ALTER TABLE "my-invoicees" DROP COLUMN "gst_percentage";--> statement-breakpoint
+-- DROP TYPE "public"."gst_percentage";

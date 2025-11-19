@@ -1,0 +1,1 @@
+-- ALTER TABLE "my-invoicees" ADD COLUMN "user_id" uuid NOT NULL;--> statement-breakpoint
