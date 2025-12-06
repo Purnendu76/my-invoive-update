@@ -4,7 +4,7 @@ import {
   IconHome2,
   IconLogout,
 } from "@tabler/icons-react";
-import { Title, Tooltip, UnstyledButton, Button, Text, Stack } from "@mantine/core";
+import { Title, Tooltip, UnstyledButton, Button,  } from "@mantine/core";
 import { MantineLogo } from "@mantinex/mantine-logo";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import classes from "./DoubleNavbar.module.css";
@@ -31,6 +31,9 @@ export default function NavbarNested() {
   const user = parseJwt(token); // ✅ Decode token
   const userName = user?.name || "User";
   const userRole = user?.role || "Guest";
+
+  // Set to true to hide the entire left aside (logo + icon bar)
+  const hideAside = true;
 
   // ✅ Logout function
 const handleLogout = () => {
@@ -62,6 +65,7 @@ const handleLogout = () => {
     (link) => link.path === location.pathname
   )?.label;
 
+  // Sidebar links: icon only
   const mainLinks = mainLinksData.map((link) => {
     const Icon = link.icon;
     return (
@@ -79,60 +83,70 @@ const handleLogout = () => {
           }
         >
           <UnstyledButton>
-            <Icon size={22} stroke={1.5} />
+            <Icon size={24} stroke={2} />
           </UnstyledButton>
         </NavLink>
       </Tooltip>
     );
   });
 
-  const links = mainLinksData.map((link) => (
-    <NavLink
-      to={link.path}
-      className={({ isActive }) =>
-        `${classes.link} ${isActive ? classes.linkActive : ""}`
-      }
-      key={link.label}
-    >
-      {link.label}
-    </NavLink>
-  ));
+  // Title links: icon + label
+  const links = mainLinksData.map((link) => {
+    const Icon = link.icon;
+    return (
+      <NavLink
+        to={link.path}
+        className={({ isActive }) =>
+          `${classes.link} ${isActive ? classes.linkActive : ""}`
+        }
+        key={link.label}
+        style={{ display: "flex", alignItems: "center", gap: 8 }}
+      >
+        <Icon size={18} style={{ marginRight: 4 }} />
+        {link.label}
+      </NavLink>
+    );
+  });
 
   return (
     <nav className={classes.navbar}>
       <div className={classes.wrapper}>
-        <div className={classes.aside}>
-          <div className={classes.logo}>
-            <MantineLogo type="mark" size={30} />
+        {!hideAside && (
+          <div className={classes.aside}>
+            <div className={classes.logo}>
+              <MantineLogo type="mark" size={30} />
+            </div>
+            {mainLinks}
           </div>
-          {mainLinks}
-        </div>
+        )}
 
         <div className={classes.main} style={{ display: "flex", flexDirection: "column", height: "100%" }}>
           <div>
-            <Title order={4} className={classes.title}>
+            <Title order={4} className={classes.title} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <MantineLogo type="mark" size={24} style={{ marginRight: 6 }} />
               {active}
             </Title>
             {links}
           </div>
 
-          {/* ✅ Username + Logout at the bottom */}
-          <Stack mt="60vh" gap="xs">
-            <Text ta="center" fw={500} >
-              Welcome {userName}
-              <p style={{ fontSize: "12px", color:'#91ADC8'}}>{userRole}</p>
-            </Text>
-            
+          {/* Beautiful bottom section: logo, username, role, logout with icon */}
+          <div style={{ marginTop: "auto", padding: "1.2rem", textAlign: "center", borderTop: "1px solid #e3e8ee" }}>
+            <div style={{ marginBottom: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+              <MantineLogo type="mark" size={28} style={{ marginBottom: 2 }} />
+              <div style={{ fontWeight: 600, fontSize: 16 }}>{userName}</div>
+              <div style={{ fontSize: 12, color: '#91ADC8', marginBottom: 2 }}>{userRole}</div>
+            </div>
             <Button
               variant="outline"
               color="red"
-              fullWidth
+              size="sm"
               onClick={handleLogout}
-              leftSection={<IconLogout size={16} />}
+              leftSection={<IconLogout size={16} style={{ marginRight: 4 }} />}
+              style={{ fontWeight: 500, letterSpacing: 0.2, padding: "8px 18px", borderRadius: 8 }}
             >
               Logout
             </Button>
-          </Stack>
+          </div>
         </div>
       </div>
     </nav>

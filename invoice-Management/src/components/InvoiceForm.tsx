@@ -55,7 +55,7 @@ export default function InvoiceForm({
     "Training",
   ];
   const milestones = ["60%", "90%", "100%"];
-  const gstOptions = ["0%", "5%", "12%", "18%", "20%"];
+  const gstOptions = ["0%", "5%", "12%", "18%"];
   const statuses = ["Paid", "Cancelled", "Under process", "Credit Note Issued"];
 
   // Dropdown style
@@ -64,7 +64,7 @@ export default function InvoiceForm({
   };
 
   // State
-  const [project, setProject] = useState<string | null>(null);
+  const [project, setProject] = useState<string | null>();
   const userRole = getUserRole();
   const adminProjects = ["NFS", "GAIL", "BGCL", "STP", "BHARAT NET", "NFS AMC"];
 
@@ -103,26 +103,27 @@ export default function InvoiceForm({
 
   // Fetch user project
   useEffect(() => {
-    const fetchUserProject = async () => {
-      if (!token) {
-        setLoadingProject(false);
-        return;
-      }
-
-      try {
-        const res = await axios.get("/api/v1/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setProject(res.data.projectRole || null);
-      } catch (error) {
-        console.error("Failed to fetch user project:", error);
-        setProject(null);
-      } finally {
-        setLoadingProject(false);
-      }
-    };
-    fetchUserProject();
-  }, [token]);
+    if (userRole !== "Admin") {
+      const fetchUserProject = async () => {
+        if (!token) {
+          setLoadingProject(false);
+          return;
+        }
+        try {
+          const res = await axios.get("/api/v1/auth/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          setProject(res.data.projectRole || null);
+        } catch (error) {
+          console.error("Failed to fetch user project:", error);
+          setProject(null);
+        } finally {
+          setLoadingProject(false);
+        }
+      };
+      fetchUserProject();
+    }
+  }, [token, userRole]);
 
   // Prefill for editing
   usePrefillInvoiceForm({

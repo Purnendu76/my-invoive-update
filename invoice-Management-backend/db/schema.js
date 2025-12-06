@@ -53,7 +53,7 @@ export const milestoneEnum = pgEnum(
 
 export const gstPercentageEnum = pgEnum(
   "gst_percentage",
-  ["5%", "12%", "18%"],
+  ["0","5%", "12%", "18%"],
   { ifNotExists: true }
 );
 

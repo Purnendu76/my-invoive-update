@@ -59,7 +59,7 @@ export default function InvoiceLineChart() {
             animationBegin={500}
             animationEasing="ease-in-out"
           />
-        </LineChart>
+        </LineChart>  
       </ResponsiveContainer>
     </Card>
   );
