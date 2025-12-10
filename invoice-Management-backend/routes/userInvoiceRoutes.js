@@ -6,6 +6,7 @@ import { buildInvoicePayload } from "../helpers/invoiceHelpers.js";
 import { calculateInvoiceTotals } from "../helpers/invoiceCalculations.js";
 import { eq, and } from "drizzle-orm";
 import { authMiddleware } from "../authMiddleware.js";
+import upload from "../middleware/upload.js";
 
 const router = Router();
 
@@ -92,11 +93,14 @@ router.get("/:id", async (req, res) => {
 });
 
 // update (owner only)
-router.put("/:id", async (req, res) => {
+router.put("/:id", upload.single("document"), async (req, res) => {
   try {
     let invoiceData = buildInvoicePayload(req);
     invoiceData = calculateInvoiceTotals(invoiceData);
     delete invoiceData.id;
+    if (req.file) {
+      invoiceData.document_path = req.file.path;
+    }
     const [updatedInvoice] = await db
       .update(invoices)
       .set(invoiceData)

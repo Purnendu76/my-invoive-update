@@ -1,8 +1,10 @@
 import {
   IconDeviceDesktopAnalytics,
+  IconFileInvoice,
   IconGauge,
-  IconHome2,
+  
   IconLogout,
+  IconUsers,
 } from "@tabler/icons-react";
 import { Title, Tooltip, UnstyledButton, Button,  } from "@mantine/core";
 import { MantineLogo } from "@mantinex/mantine-logo";
@@ -41,7 +43,7 @@ const handleLogout = () => {
   Cookies.remove("role", { path: "/" });
   Cookies.remove("name", { path: "/" });
   navigate("/", { replace: true });
-  window.location.reload(); // 🔑 clears all in-memory state
+  window.location.reload(); 
 };
 
   // ✅ Filter links based on role
@@ -49,8 +51,9 @@ const handleLogout = () => {
     { icon: IconGauge, label: "Dashboard", path: "/dashboard" },
     ...(role === "Admin"
       ? [
-          { icon: IconHome2, label: "Admin-Invoice", path: "/admin-invoice" },
-          { icon: IconHome2, label: "Users", path: "/users" },
+          { icon: IconFileInvoice, label: "Admin-Invoice", path: "/admin-invoice" },
+          { icon: IconUsers, label: "Users", path: "/users" },
+          { icon: IconDeviceDesktopAnalytics, label: "Projects", path: "/projects" },
         ]
       : [
           {

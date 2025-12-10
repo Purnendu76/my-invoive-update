@@ -230,6 +230,7 @@ export default function Admin_invoice() {
                 <Table.Th>Balance (₹)</Table.Th>
                 <Table.Th>Status</Table.Th>
                 <Table.Th>Projects</Table.Th>
+                
                 <Table.Th>Action</Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -289,6 +290,7 @@ export default function Admin_invoice() {
                       </ActionIcon>
                     </Group>
                   </Table.Td>
+                  
                 </Table.Tr>
               ))}
             </Table.Tbody>
@@ -303,13 +305,13 @@ export default function Admin_invoice() {
         </Text>
       )}
 
-  <Modal
-    size="55rem"
+<Modal
+    size="67rem"
     opened={opened}
     onClose={close}
     title={selectedInvoice ? "Edit Invoice" : "Add New Invoice"}
     centered
-    withCloseButton={false}
+    withCloseButton={true} // ✅ Changed to true to show the 'X' button
     closeOnClickOutside={false}
   >
     <InvoiceForm

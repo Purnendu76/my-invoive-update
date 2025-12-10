@@ -4,22 +4,24 @@ import { invoices } from "../db/schema.js";
 import { buildInvoicePayload } from "../helpers/invoiceHelpers.js";
 import { calculateInvoiceTotals } from "../helpers/invoiceCalculations.js";
 import { eq } from "drizzle-orm";
+import upload from "../middleware/upload.js";
 
 const router = Router();
 
 /**
  * ✅ Create Invoice
  */
-router.post("/", async (req, res) => {
+router.post("/", upload.single("document"), async (req, res) => {
   try {
     let invoiceData = buildInvoicePayload(req);
     invoiceData = calculateInvoiceTotals(invoiceData);
-
+    if (req.file) {
+      invoiceData.document_path = req.file.path;
+    }
     const [newInvoice] = await db
       .insert(invoices)
       .values(invoiceData)
       .returning();
-
     res.status(201).json({ message: "Invoice created", invoice: newInvoice });
   } catch (error) {
     console.error("❌ Create invoice error:", error);

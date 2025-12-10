@@ -9,7 +9,9 @@ import PrivateRoute from "../components/PrivateRoute";
 import Users from "../pages/users";
 import Test from "../pages/test";
 import InvoiceDetails from "../pages/InvoiceDetails";
-
+import SelectedStatus from "../pages/selectedStatus";
+import { AddProject } from "../pages/projects";
+import { Project } from "../components/project";
 const routes: RouteObject[] = [
   { path: "/", element: <Auth /> },
   { path: "/register", element: <Register /> },
@@ -32,6 +34,16 @@ const routes: RouteObject[] = [
             <Admin_invoice />
           </PrivateRoute>
         ),
+      },
+
+      {
+        path:"/projects",
+        element: (
+          <PrivateRoute allowedRoles={["Admin"]}>
+            <AddProject />
+          </PrivateRoute>
+        ),
+
       },
       {
         path: "/admin-invoice/:invoiceNumber",
@@ -73,6 +85,24 @@ const routes: RouteObject[] = [
           </PrivateRoute>
         ),
       },
+
+      {
+        path:"/select-status",
+        element: (
+          <PrivateRoute allowedRoles={["Admin"]}>
+            <SelectedStatus />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/project/:projectName",
+        element: (
+          <PrivateRoute allowedRoles={["Admin"]}>
+            <Project />
+          </PrivateRoute>
+        ),
+      }
+
     ],
   },
 ];

@@ -6,15 +6,9 @@ import "@mantine/charts/styles.css";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
 
-const projects = [
-  "NFS",
-  "GAIL",
-  "BGCL",
-  "STP",
-  "BHARAT NET",
-  "NFS AMC",
-];
+const projects = ["NFS", "GAIL", "BGCL", "STP", "BHARAT NET", "NFS AMC"];
 
 const projectColors = [
   "teal.6",
@@ -37,6 +31,8 @@ export default function InvoiceDonutChart() {
   const [invoiceData, setInvoiceData] = useState<InvoiceDonutData[]>([]);
   const [total, setTotal] = useState(0);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchInvoices = async () => {
       try {
@@ -44,42 +40,58 @@ export default function InvoiceDonutChart() {
         const res = await axios.get("/api/v1/invoices", {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+
         const invoices = Array.isArray(res.data) ? res.data : [];
         setTotal(invoices.length);
-        // Log all API data
-        console.log("Fetched invoices:", invoices);
 
-        // Group by project
         const counts: Record<string, number> = {};
-        projects.forEach((p) => { counts[p] = 0; });
+        projects.forEach((p) => {
+          counts[p] = 0;
+        });
+
         invoices.forEach((inv) => {
           const proj = inv.project;
           if (Array.isArray(proj)) {
-            proj.forEach((p) => {
-              const key = projects.find((name) => name.toLowerCase() === String(p).trim().toLowerCase());
+            proj.forEach((p: string) => {
+              const key = projects.find(
+                (name) =>
+                  name.toLowerCase() === String(p).trim().toLowerCase()
+              );
               if (key) counts[key]++;
             });
           } else {
-            const key = projects.find((name) => name.toLowerCase() === String(proj).trim().toLowerCase());
+            const key = projects.find(
+              (name) =>
+                name.toLowerCase() === String(proj).trim().toLowerCase()
+            );
             if (key) counts[key]++;
           }
         });
-        // Log grouped project counts
-        console.log("Project invoice counts:", counts);
 
         const data: InvoiceDonutData[] = projects.map((p, i) => ({
           name: p,
           value: counts[p],
           color: projectColors[i % projectColors.length],
         }));
+
         setInvoiceData(data);
       } catch {
         setInvoiceData([]);
         setTotal(0);
       }
     };
+
     fetchInvoices();
   }, []);
+
+  // 🔥 handle click on a donut slice
+  const handleSliceClick = (slice: any) => {
+    const projectName = slice?.name;
+    if (!projectName) return;
+
+    // Navigate to /project/:projectName
+    navigate(`/project/${encodeURIComponent(projectName)}`);
+  };
 
   return (
     <Card shadow="lg" radius="lg" p="xl" withBorder>
@@ -108,6 +120,11 @@ export default function InvoiceDonutChart() {
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 1, ease: "easeOut" }}
+          // Make segments clickable
+          pieProps={{
+            onClick: (slice: unknown ) => handleSliceClick(slice),
+            style: { cursor: "pointer" },
+          }}
         />
       </Group>
 

@@ -127,7 +127,7 @@ export default function RevenueStatusChart() {
             height={60}
           />
           <YAxis />
-          <Tooltip />
+          <Tooltip   />
           <Legend />
           <Bar dataKey="Paid" stackId="a" fill="#14b8a6" animationDuration={1500} />
           <Bar dataKey="Cancelled" stackId="a" fill="#ef4444" animationDuration={1500} />

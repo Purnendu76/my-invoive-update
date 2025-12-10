@@ -88,6 +88,7 @@ export const invoices = pgTable("my-invoicees", {
   state: stateEnum("state").notNull(),
   mybillCategory: mybillCategoryEnum("my_bill_category").notNull(),
   milestone: milestoneEnum("milestone"),
+  
 
   invoiceNumber: varchar("invoice_number", { length: 255 }).notNull(),
   invoiceDate: date("invoice_date").notNull(),
@@ -120,4 +121,5 @@ export const invoices = pgTable("my-invoicees", {
   balance: numeric("balance").notNull().default("0"),
 
   remarks: text("remarks"),
+  document_path: varchar("document_path", { length: 255 }), // file path for uploaded document
 });

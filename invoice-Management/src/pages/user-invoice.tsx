@@ -210,6 +210,8 @@ export default function User_invoice() {
                       color="blue"
                       variant="light"
                       onClick={() => handleEdit(invoice)}
+                      disabled={invoice.status === "Paid"}
+                      style={invoice.status === "Paid" ? { opacity: 0.5, pointerEvents: "none" } : {}}
                     >
                       <IconEdit size={16} />
                     </ActionIcon>
