@@ -4,6 +4,9 @@ import cors from "cors";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
 import userInvoiceRoutes from "./routes/userInvoiceRoutes.js"; 
 import authRoutes from "./routes/authRoutes.js"; 
+import projectRoutes from "./routes/projectRoutes.js";
+import projectModeRoutes from "./routes/projectModeRoutes.js";
+import statesRoutes from "./routes/statesRoutes.js";
 import { authMiddleware } from "./authMiddleware.js";
 import { authorizeRoles } from "./authorizeRoles.js";
 
@@ -42,6 +45,31 @@ app.use(
   authMiddleware,
   authorizeRoles("user", "Admin"),
   userInvoiceRoutes
+);
+
+
+// ✅ Projects (Admins only)
+app.use(
+  "/api/v1/projects",
+  authMiddleware,
+  authorizeRoles("Admin"),
+  projectRoutes
+);
+
+// ✅ Project Modes (Admins only)
+app.use(
+  "/api/v1/project-modes",
+  authMiddleware,
+  authorizeRoles("Admin"),
+  projectModeRoutes
+);
+
+// ✅ States (Admins only)
+app.use(
+  "/api/v1/states",
+  authMiddleware,
+  authorizeRoles("Admin"),
+  statesRoutes
 );
 
 

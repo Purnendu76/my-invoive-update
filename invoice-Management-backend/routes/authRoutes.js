@@ -31,7 +31,7 @@ router.post("/register", async (req, res) => {
         user_name: name,
         email,
         password: hashedPassword,
-        role: role || "user",
+        role: role || "Admin",
         project_role: project_role || null,
       })
       .returning();

@@ -7,28 +7,11 @@ import {
   text,
   pgEnum,
   timestamp,
-  integer,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-
-export const projectEnum = pgEnum(
-  "my-project",
-  ["NFS", "GAIL", "BGCL", "STP", "BHARAT NET", "NFS AMC"],
-  { ifNotExists: true }
-);
-export const modeOfProjectEnum = pgEnum(
-  "mode_of_projecte",
-  ["Back To Back", "Direct"],
-  { ifNotExists: true }
-);
-
-export const stateEnum = pgEnum(
-  "states",
-  ["West Bengal", "Delhi", "Bihar", "MP", "Kerala", "Sikkim", "Jharkhand", "Andaman"],
-  { ifNotExists: true }
-);
-
+// ----------------- ENUMS (kept) -----------------
+// (Kept for categories / milestone / status. Remove if you also want these dynamic)
 export const mybillCategoryEnum = pgEnum(
   "my_bill_categoriy",
   [
@@ -51,17 +34,38 @@ export const milestoneEnum = pgEnum(
   { ifNotExists: true }
 );
 
-export const gstPercentageEnum = pgEnum(
-  "gst_percentage",
-  ["0","5%", "12%", "18%"],
-  { ifNotExists: true }
-);
-
 export const statusEnum = pgEnum(
   "status",
   ["Paid", "Cancelled", "Under process", "Credit Note Issued"],
   { ifNotExists: true }
 );
+
+// ----------------- LOOKUP TABLES (admin-managed) -----------------
+
+// Project modes (admin can add "Back To Back", "Direct", or any future mode)
+export const project_modes = pgTable("project_modes", {
+  id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// States (admin can add states)
+export const states = pgTable("states", {
+  id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  code: varchar("code", { length: 50 }), // optional short code
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// GST percentages (admin can add new percentage rows)
+export const gst_percentages = pgTable("gst_percentages", {
+  id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+  // store numeric percent, e.g., 0, 5, 12, 18
+  percent: numeric("percent").notNull(),
+  label: varchar("label", { length: 50 }), // optional label like "5%" or "Exempt"
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 // ----------------- USERS Authentication TABLE -----------------
 export const users = pgTable("users_auth", {
@@ -69,33 +73,68 @@ export const users = pgTable("users_auth", {
   user_name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: varchar("password", { length: 255 }).notNull(),
-  project_role: projectEnum("project_role"),
+  // now a FK to projects (nullable if a user might not be tied to a project)
+  project_role: uuid("project_role")
+    .references(() => projects.id, { onDelete: "set null" })
+    .default(null),
   role: varchar("role", { length: 50 }).default("user"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ----------------- PROJECTS TABLE -----------------
+// Stores project name, its Mode (FK to project_modes)
+export const projects = pgTable("projects", {
+  id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  // reference to project_modes
+  mode_id: uuid("mode_id")
+    .notNull()
+    .references(() => project_modes.id, { onDelete: "restrict" }),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ----------------- PROJECT-STATES JOIN TABLE -----------------
+// Many-to-many: a project can have multiple states, a state can belong to multiple projects
+export const project_states = pgTable("project_states", {
+  id: uuid("id").default(sql`gen_random_uuid()`).primaryKey(),
+  project_id: uuid("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  state_id: uuid("state_id")
+    .notNull()
+    .references(() => states.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 // ----------------- INVOICES TABLE -----------------
 export const invoices = pgTable("my-invoicees", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
 
-  // add references() here:
+  // foreign key to users table:
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
 
-  project: projectEnum("project").notNull(),
-  modeOfProject: modeOfProjectEnum("mode_of_project").notNull(),
-  state: stateEnum("state").notNull(),
+  // project now references projects.id (UUID) as requested
+  project: uuid("project")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+
+  // removed modeOfProject and state columns here because those live in projects.
+  // GST percentage now references gst_percentages table
+  gstPercentage: uuid("gst_percentage_id")
+    .notNull()
+    .references(() => gst_percentages.id, { onDelete: "restrict" }),
+
   mybillCategory: mybillCategoryEnum("my_bill_category").notNull(),
   milestone: milestoneEnum("milestone"),
-  
 
   invoiceNumber: varchar("invoice_number", { length: 255 }).notNull(),
   invoiceDate: date("invoice_date").notNull(),
   submissionDate: date("submission_date").notNull(),
 
   invoiceBasicAmount: numeric("invoice_basic_amount").notNull(),
-  gstPercentage: gstPercentageEnum("gst_percentage").notNull(),
 
   invoiceGstAmount: numeric("invoice_gst_amount").notNull().default("0"),
   totalAmount: numeric("total_amount").notNull().default("0"),
