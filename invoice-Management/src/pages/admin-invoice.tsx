@@ -12,6 +12,7 @@ import {
   Loader,
   Title,
   Select,
+  MultiSelect,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconSearch, IconPlus, IconEdit, IconTrash } from "@tabler/icons-react";
@@ -44,29 +45,46 @@ export default function Admin_invoice() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [stateFilter, setStateFilter] = useState<string[]>([]);
 
+  const [states, setStates] = useState<{ id: string; name: string }[]>([]);
   const [opened, { open, close }] = useDisclosure(false);
 
   // Infinite scroll
   const [visibleCount, setVisibleCount] = useState(20);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
+  // Fetch states for filter
+  const fetchStates = async () => {
+    try {
+      const token = Cookies.get("token");
+      const res = await axios.get("/api/v1/states", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setStates(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      setStates([]);
+    }
+  };
+
   // Fetch invoices
   const fetchInvoices = async () => {
     try {
       setLoading(true);
       const token = Cookies.get("token");
-      const res = await axios.get("/api/v1/invoices", {
+      let url = "/api/v1/invoices";
+      if (stateFilter.length > 0) {
+        url += `?state_ids=${stateFilter.join(",")}`;
+      }
+      const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const normalized = (res.data || []).map((inv: Invoice) => ({
         ...inv,
         invoiceDate: inv.invoiceDate ? new Date(inv.invoiceDate) : null,
         submissionDate: inv.submissionDate ? new Date(inv.submissionDate) : null,
         paymentDate: inv.paymentDate ? new Date(inv.paymentDate) : null,
       }));
-
       setInvoices(normalized);
     } catch (error) {
       console.error("Error fetching invoices:", error);
@@ -77,8 +95,13 @@ export default function Admin_invoice() {
   };
 
   useEffect(() => {
-    fetchInvoices();
+    fetchStates();
   }, []);
+
+  useEffect(() => {
+    fetchInvoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateFilter]);
 
   // Delete invoice
   const handleDelete = (id: string) => {
@@ -209,6 +232,14 @@ export default function Admin_invoice() {
             style={{ width: 180 }}
             clearable
           />
+          <MultiSelect
+            placeholder="Filter by state(s)"
+            value={stateFilter}
+            onChange={setStateFilter}
+            data={states.map(s => ({ value: s.id, label: s.name }))}
+            style={{ width: 220 }}
+            clearable
+          />
         </Group>
 
         <Button leftSection={<IconPlus size={16} />} onClick={handleNew}>
@@ -230,7 +261,7 @@ export default function Admin_invoice() {
                 <Table.Th>Balance (₹)</Table.Th>
                 <Table.Th>Status</Table.Th>
                 <Table.Th>Projects</Table.Th>
-                
+                <Table.Th>States</Table.Th>
                 <Table.Th>Action</Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -278,6 +309,19 @@ export default function Admin_invoice() {
                     )}
                   </Table.Td>
                   <Table.Td>
+                    {Array.isArray(invoice.states) && invoice.states.length > 0 ? (
+                      <Group gap="xs">
+                        {invoice.states.map((state: any) => (
+                          <Badge key={state.id} color="gray" variant="light">
+                            {state.name}
+                          </Badge>
+                        ))}
+                      </Group>
+                    ) : (
+                      <Text c="dimmed" size="xs">No states</Text>
+                    )}
+                  </Table.Td>
+                  <Table.Td>
                     <Group gap="xs">
                       <ActionIcon color="blue" variant="light" onClick={() => handleEdit(invoice)}>
                         <IconEdit size={16} />
@@ -290,7 +334,6 @@ export default function Admin_invoice() {
                       </ActionIcon>
                     </Group>
                   </Table.Td>
-                  
                 </Table.Tr>
               ))}
             </Table.Tbody>
@@ -305,26 +348,26 @@ export default function Admin_invoice() {
         </Text>
       )}
 
-<Modal
-    size="67rem"
-    opened={opened}
-    onClose={close}
-    title={selectedInvoice ? "Edit Invoice" : "Add New Invoice"}
-    centered
-    withCloseButton={true} // ✅ Changed to true to show the 'X' button
-    closeOnClickOutside={false}
-  >
-    <InvoiceForm
-      onSubmit={fetchInvoices}
-      onClose={close}
-      initialValues={selectedInvoice ?? undefined}
-    />
-  </Modal>
-  <InvoicePopup
-    opened={viewModalOpen}
-    onClose={() => setViewModalOpen(false)}
-    invoice={selectedInvoice}
-  />
+      <Modal
+        size="67rem"
+        opened={opened}
+        onClose={close}
+        title={selectedInvoice ? "Edit Invoice" : "Add New Invoice"}
+        centered
+        withCloseButton={true}
+        closeOnClickOutside={false}
+      >
+        <InvoiceForm
+          onSubmit={fetchInvoices}
+          onClose={close}
+          initialValues={selectedInvoice ?? undefined}
+        />
+      </Modal>
+      <InvoicePopup
+        opened={viewModalOpen}
+        onClose={() => setViewModalOpen(false)}
+        invoice={selectedInvoice}
+      />
     </Stack>
   );
 }

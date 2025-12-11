@@ -3,7 +3,7 @@ import db from "../db/db_connect.js";
 import { invoices } from "../db/schema.js";
 import { buildInvoicePayload } from "../helpers/invoiceHelpers.js";
 import { calculateInvoiceTotals } from "../helpers/invoiceCalculations.js";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import upload from "../middleware/upload.js";
 
 const router = Router();
@@ -34,8 +34,39 @@ router.post("/", upload.single("document"), async (req, res) => {
  */
 router.get("/", async (req, res) => {
   try {
-    const allInvoices = await db.select().from(invoices);
-    res.json(allInvoices);
+    const { state_ids } = req.query;
+    let invoicesResult = [];
+    let projectIds = [];
+    if (state_ids) {
+      // Parse state_ids from query (comma-separated or array)
+      let stateIdArr = Array.isArray(state_ids) ? state_ids : String(state_ids).split(",").map(s => s.trim()).filter(Boolean);
+      if (stateIdArr.length > 0) {
+        // Find all project_ids that have any of these states
+        const projectStatesRows = await db.select().from(require("../db/schema.js").project_states).where(inArray(require("../db/schema.js").project_states.state_id, stateIdArr));
+        projectIds = [...new Set(projectStatesRows.map(ps => ps.project_id))];
+        if (projectIds.length > 0) {
+          invoicesResult = await db.select().from(invoices).where(inArray(invoices.project, projectIds));
+        }
+      }
+    } else {
+      invoicesResult = await db.select().from(invoices);
+      projectIds = invoicesResult.map(inv => inv.project);
+    }
+    // Attach states to each invoice
+    let statesMap = {};
+    if (projectIds.length > 0) {
+      const projectStatesRows = await db.select().from(require("../db/schema.js").project_states).where(inArray(require("../db/schema.js").project_states.project_id, projectIds));
+      const stateIds = projectStatesRows.map(ps => ps.state_id);
+      const allStates = stateIds.length > 0 ? await db.select().from(require("../db/schema.js").states).where(inArray(require("../db/schema.js").states.id, stateIds)) : [];
+      const stateObjMap = {};
+      allStates.forEach(s => { stateObjMap[s.id] = s; });
+      projectStatesRows.forEach(ps => {
+        if (!statesMap[ps.project_id]) statesMap[ps.project_id] = [];
+        if (stateObjMap[ps.state_id]) statesMap[ps.project_id].push({ id: ps.state_id, name: stateObjMap[ps.state_id].name });
+      });
+    }
+    const invoicesWithStates = invoicesResult.map(inv => ({ ...inv, states: statesMap[inv.project] || [] }));
+    res.json(invoicesWithStates);
   } catch (error) {
     console.error("❌ Get invoices error:", error);
     res.status(500).json({ error: "Failed to fetch invoices" });
