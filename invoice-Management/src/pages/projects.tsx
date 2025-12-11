@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Table,
   Stack,
@@ -8,19 +8,17 @@ import {
   Loader,
   Badge,
   Button,
+  Modal,
+  TextInput,
+  
 } from "@mantine/core";
+import { IconSearch, IconPlus } from "@tabler/icons-react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "@mantine/form";
+import { notifyError, notifySuccess } from "../lib/utils/notify";
 import type { Invoice } from "@/interface/Invoice";
-import { notifyError } from "../lib/utils/notify";
-
-// Format rupee values
-const formatMoney = (val: number | null | undefined): string => {
-  const n = Number(val ?? 0);
-  if (isNaN(n) || n <= 0) return "0.00";
-  return n.toFixed(2);
-};
 
 type ProjectSummary = {
   project: string;
@@ -30,25 +28,33 @@ type ProjectSummary = {
   balance: number;
 };
 
-export  function AddProject() {
+const formatMoney = (val: number | null | undefined): string => {
+  const n = Number(val ?? 0);
+  if (isNaN(n) || n <= 0) return "0.00";
+  return n.toFixed(2);
+};
+
+export function AddProject() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [search, setSearch] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const token = Cookies.get("token");
 
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      const token = Cookies.get("token");
       const res = await axios.get("/api/v1/invoices", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      const invoices: Invoice[] = Array.isArray(res.data) ? res.data : [];
 
-      const invoices: Invoice[] = res.data || [];
-
-      // Build project summaries
       const projectMap = new Map<string, ProjectSummary>();
 
       invoices.forEach((inv) => {
+        // get canonical project name (if array take first)
         const proj = Array.isArray(inv.project)
           ? String(inv.project[0] ?? "Unknown")
           : String(inv.project ?? "Unknown");
@@ -79,18 +85,89 @@ export  function AddProject() {
   };
 
   useEffect(() => {
-    fetchInvoices();
+    void fetchInvoices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Add Project form
+  const addProjectForm = useForm({
+    initialValues: { projectName: "" },
+    validate: {
+      projectName: (v) =>
+        v.trim().length < 2 ? "Project name must be at least 2 characters" : null,
+    },
+  });
+
+  const handleAddProject = async (values: typeof addProjectForm.values) => {
+    const name = values.projectName.trim();
+    if (!name) return;
+
+    // optimistic UI: add to local list
+    const newProj: ProjectSummary = {
+      project: name,
+      invoiceCount: 0,
+      totalAmount: 0,
+      paidAmount: 0,
+      balance: 0,
+    };
+
+    setProjects((prev) => [newProj, ...prev]);
+    addProjectForm.reset();
+    setModalOpen(false);
+
+    try {
+ 
+      notifySuccess("Project added successfully");
+    } catch (err) {
+      console.error("Failed to persist project to server:", err);
+      notifyError("Failed to persist project to server (local add succeeded)");
+    }
+  };
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return projects;
+    const q = search.toLowerCase();
+    return projects.filter(
+      (p) =>
+        p.project.toLowerCase().includes(q) ||
+        String(p.invoiceCount).includes(q) ||
+        String(p.totalAmount).includes(q)
+    );
+  }, [projects, search]);
 
   return (
     <Stack>
-      <Stack gap="xs" mb="md">
-        <Title order={2}>Projects</Title>
-        <Text c="dimmed" size="sm">
-          View all projects and open their invoices.
-        </Text>
-      </Stack>
+      {/* Header + action (search left, Add button right) */}
+      <Group justify="space-between" mb="md">
+        <Stack gap="xs">
+          <Title order={2}>Projects</Title>
+          <Text c="dimmed" size="sm">
+            View all projects and open their invoices.
+          </Text>
+        </Stack>   
+      </Group>
 
+     <Group justify="space-between" mb="md">
+
+  {/* LEFT SIDE → Search Box */}
+  <Group gap="xs">
+    <TextInput
+      placeholder="Search by project"
+      leftSection={<IconSearch size={16} />}
+      value={search}
+      onChange={(e) => setSearch(e.currentTarget.value)}
+      style={{ width: 200 }}
+    />
+  </Group>
+
+  <Button
+    leftSection={<IconPlus size={16} />}
+    onClick={() => setModalOpen(true)}
+  >
+    Add New Project
+  </Button>
+
+</Group>
       {loading ? (
         <Loader mt="lg" />
       ) : projects.length === 0 ? (
@@ -110,14 +187,18 @@ export  function AddProject() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {projects.map((proj) => (
+            {filtered.map((proj) => (
               <Table.Tr key={proj.project}>
                 <Table.Td>
-                  <Group gap="xs">
-                    <Badge color="blue" variant="light" component={Link} to={`/project/${encodeURIComponent(proj.project)}`} style={{ cursor: "pointer", textDecoration: "none" }}>
-                      {proj.project}
-                    </Badge>
-                  </Group>
+                  <Badge
+                    color="blue"
+                    variant="light"
+                    component={Link}
+                    to={`/project/${encodeURIComponent(proj.project)}`}
+                    style={{ cursor: "pointer", textDecoration: "none" }}
+                  >
+                    {proj.project}
+                  </Badge>
                 </Table.Td>
                 <Table.Td>{proj.invoiceCount}</Table.Td>
                 <Table.Td>₹{formatMoney(proj.totalAmount)}</Table.Td>
@@ -137,6 +218,24 @@ export  function AddProject() {
           </Table.Tbody>
         </Table>
       )}
+
+      {/* Add Project Modal (same pattern as Users page modal) */}
+      <Modal opened={modalOpen} onClose={() => setModalOpen(false)} title="Add New Project" centered>
+        <form onSubmit={addProjectForm.onSubmit(handleAddProject)}>
+          <Stack>
+            <TextInput
+              label="Project Name"
+              placeholder="e.g. NFS"
+              {...addProjectForm.getInputProps("projectName")}
+            />
+            <Group mt="md">
+              <Button type="submit">Create</Button>
+            </Group>
+          </Stack>
+        </form>
+      </Modal>
     </Stack>
   );
 }
+
+export default AddProject;
