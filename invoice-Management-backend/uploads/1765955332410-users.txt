@@ -1,0 +1,16 @@
+users
+
+NFS-	        aarav@test.com		
+GAIL-	        arjun@test.com		
+BGCL-	        krishna@test.com	
+STP-	        vihaan@test.com
+BHARAT NET-	advik@test.com	
+NFS AMC-	ishaan@test.com
+
+password-123456
+
+admin
+
+user-	  admin@test.com
+password- 123456 
+

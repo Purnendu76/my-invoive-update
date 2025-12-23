@@ -17,6 +17,8 @@ import { IconBrandGoogle, IconBrandGithub } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import axios, { AxiosError } from "axios";
 import { notifySuccess, notifyError } from "../lib/utils/notify";
+import { getUserRole } from "../lib/utils/getUserRole";
+import { use, useEffect } from "react";
 
 // ✅ Strongly typed form values
 interface LoginFormValues {
@@ -26,6 +28,14 @@ interface LoginFormValues {
 
 export default function Auth() {
   const navigate = useNavigate();
+  const user = getUserRole();
+  const allowedRoles = ["Admin", "user"];
+
+  useEffect(() => {
+    if (user && allowedRoles.includes(user)) {
+      navigate("/dashboard-2");
+    }
+  }, [user, navigate]);
 
   const form = useForm<LoginFormValues>({
     initialValues: {
@@ -58,7 +68,7 @@ export default function Auth() {
       console.log("Logged in:", res.data);
 
       // ✅ Redirect to dashboard
-      navigate("/dashboard");
+      navigate("/dashboard-2");
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
       console.error("Login error:", error);
@@ -166,9 +176,9 @@ export default function Auth() {
                 Create an account
               </Button>
 
-              <Divider label="or continue with" labelPosition="center" />
+              {/* <Divider label="or continue with" labelPosition="center" /> */}
 
-              <Group grow>
+              {/* <Group grow>
                 <Button
                   variant="light"
                   leftSection={<IconBrandGoogle size={20} />}
@@ -181,7 +191,7 @@ export default function Auth() {
                 >
                   GitHub
                 </Button>
-              </Group>
+              </Group> */}
             </Stack>
           </Center>
         </Box>

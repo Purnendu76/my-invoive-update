@@ -1,0 +1,66 @@
+Feedback - 16th Dec 2025
+
+1. If Net Payable is not equal to “Amount Paid by Client”
+→ then do not allow invoice submission
+
+2. Error Message: (Check for errors)
+“Balance Due should not be 0”
+
+3. Invoice Upload - Allow up to 3 files to upload
+
+Invoice Copy
+Proof of submission (Submission copy)
+Supporting Documents
+
+4. Mode - Already defined based on project. It should be greyed out or better Remove it from the Form. But show it in the dashboard Table.
+
+5. File Upload - How can admin see uploaded files???
+
+6. Dashboard Requirements
+
+Financial Year → Dropdown
+Status → Dropdown
+Bill Category → Dropdown
+
+7. When status is Under Process, Show chart based on aging like it is pending for 1 week, 2 weks, 1 mont etc...
+Title of the Bar Chart: Overdue By (Pending since)
+1 week
+2 weeks
+1 month
+2 months
+3 months
+6 months
+1 year
+
+Then we should also show the data based on
+Pending since invoice Date
+Pending since submission Date
+
+9. Add all invoice data for last 9 months, Current financial year focus (Vinit to provide data)
+
+10. Dashboard Mapping - In the current Dashboard please rename the title:
+Deduction → Bill Type (Bill Category)
+
+11. Under Invoice Trends - Add the same table as Admin Invoice table. Show 10 rows of data and a button called "Ful Details" to go to respective pages.
+
+12. UI Consistency - All charts should have the same color scheme
+
+13. Add New Project fields:
+Project Name *
+Work Order
+Bill Category
+Mode
+etc...
+
+
+
+
+
+
+
+
+
+
+
+
+

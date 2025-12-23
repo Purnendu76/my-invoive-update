@@ -8,7 +8,11 @@ import {
   Badge,
   Loader,
   Button,
+  TextInput,
+  Select,
 } from "@mantine/core";
+import { DatePickerInput } from '@mantine/dates';
+import { IconSearch } from "@tabler/icons-react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { useParams, Link } from "react-router-dom";
@@ -38,6 +42,9 @@ export  function Project() {
   const { projectName } = useParams<{ projectName: string }>();
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
 
   const fetchInvoices = async () => {
     try {
@@ -79,6 +86,38 @@ export  function Project() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectName]);
 
+
+  // Status options
+  const statusOptions = [
+    { value: "Paid", label: "Paid" },
+    { value: "Under process", label: "Under Process" },
+    { value: "Credit Note Issued", label: "Credit Note Issued" },
+    { value: "Cancelled", label: "Cancelled" },
+  ];
+
+  // Filtered invoices (search, status, date)
+  const filteredInvoices = invoices.filter((inv) => {
+    const matchesSearch =
+      inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      inv.status?.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus = !statusFilter || inv.status?.toLowerCase() === statusFilter.toLowerCase();
+
+    // Date range filter
+    let matchesDate = true;
+    if (dateRange[0] && dateRange[1]) {
+      const invDate = inv.invoiceDate instanceof Date ? inv.invoiceDate : inv.invoiceDate ? new Date(inv.invoiceDate) : null;
+      if (!invDate || isNaN(invDate)) return false;
+      const start = new Date(dateRange[0]);
+      start.setHours(0,0,0,0);
+      const end = new Date(dateRange[1]);
+      end.setHours(23,59,59,999);
+      if (invDate < start || invDate > end) matchesDate = false;
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
   const titleProject = decodeURIComponent(projectName || "");
 
   return (
@@ -93,17 +132,52 @@ export  function Project() {
 
         <Button
           component={Link}
-          to="/projects"
+          to="/dashboard-2"
           variant="light"
           leftSection={<IconArrowLeft size={16} />}
         >
-          Back to Projects
+          Back to Dashboard
         </Button>
+      </Group>
+
+      {/* Filters */}
+      <Group gap="sm" mb="md">
+        <TextInput
+          placeholder="Search invoices..."
+          leftSection={<IconSearch size={16} />}
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          style={{ width: "220px" }}
+        />
+        <Select
+          placeholder="Filter by status"
+          value={statusFilter}
+          onChange={setStatusFilter}
+          data={statusOptions}
+          style={{ width: 180 }}
+          clearable
+        />
+        <DatePickerInput
+          type="range"
+          value={dateRange}
+          onChange={setDateRange}
+          placeholder="Date range"
+          radius="md"
+          style={{ minWidth: 220 }}
+          mx={2}
+          clearable
+          dropdownType="modal"
+          size="sm"
+          allowSingleDateInRange
+          maxDate={new Date(2100, 11, 31)}
+          minDate={new Date(2000, 0, 1)}
+          label={null}
+        />
       </Group>
 
       {loading ? (
         <Loader mt="lg" />
-      ) : invoices.length === 0 ? (
+      ) : filteredInvoices.length === 0 ? (
         <Text ta="center" mt="lg" c="dimmed">
           No invoices found for this project.
         </Text>
@@ -120,7 +194,7 @@ export  function Project() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {invoices.map((invoice) => (
+            {filteredInvoices.map((invoice) => (
               <Table.Tr key={invoice.id}>
                 <Table.Td>{invoice.invoiceNumber || "-"}</Table.Td>
                 <Table.Td>{formatDateToLong(invoice.invoiceDate)}</Table.Td>
@@ -133,12 +207,12 @@ export  function Project() {
                   <Badge
                     color={
                       invoice.status === "Paid"
-                        ? "green"
-                        : invoice.status === "Under process"
-                        ? "yellow"
-                        : invoice.status === "Cancelled"
-                        ? "red"
-                        : "blue"
+                          ? "#20c997"
+                          : invoice.status === "Under process"
+                          ? "#228be6"
+                          : invoice.status === "Cancelled"
+                          ? "#fa5252"
+                          : "#FFBF00"
                     }
                   >
                     {invoice.status || "-"}

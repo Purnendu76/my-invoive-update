@@ -15,7 +15,7 @@ export default function Layout() {
 
     
       <AppShell.Main>
-        <div style={{ padding: "8px 40px" }}>
+        <div >
           <Outlet />
         </div>
       </AppShell.Main>

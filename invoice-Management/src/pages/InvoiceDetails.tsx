@@ -115,85 +115,386 @@ export default function InvoiceDetails() {
   };
 
   return (
-    <Stack gap="xl" p="xl" align="center" style={{ minHeight: "100vh", background: "linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%)" }}>
-      <div ref={invoiceRef} style={{ width: "100%", maxWidth: 900 }}>
-        <Title order={2} c="blue.8" style={{ letterSpacing: 1, fontWeight: 700, fontSize: rem(32) }}>
-          Invoice <span style={{ color: '#228be6' }}>#{invoice.invoiceNumber}</span>
-        </Title>
-
-        <Paper p="xl" radius="lg" shadow="md" withBorder style={{ background: "#fff" }}>
-          <Group justify="space-between" mb="md">
-            <Group gap={8}>
-              <Badge size="lg" color={
-                invoice.status === "Paid"
-                  ? "green"
-                  : invoice.status === "Under process"
-                  ? "yellow"
-                  : invoice.status === "Cancelled"
-                  ? "red"
-                  : "blue"
-              } variant="filled" style={{ fontSize: rem(16), padding: "0 16px" }}>
-                {invoice.status}
-              </Badge>
-              <Badge size="md" color="gray" variant="light">
-                {fmtProject(invoice.project)}
-              </Badge>
-            </Group>
-            <Group gap={16}>
-              <Text fw={700} size="xl" c="blue.7">Net Payable: ₹{netPayable}</Text>
-              <Text fw={700} size="xl" c="teal.7">Balance: ₹{balance}</Text>
-            </Group>
-          </Group>
-
-          <Divider my="md" label="Invoice Details" labelPosition="center" color="blue.2"/>
-
-          <Grid gutter="xl">
-            <Grid.Col span={6}>
-              <Stack gap="sm">
-                <Text><strong>Project:</strong> <span style={{ color: '#1971c2' }}>{fmtProject(invoice.project)}</span></Text>
-                <Text><strong>Mode of Project:</strong> {invoice.modeOfProject || "-"}</Text>
-                <Text><strong>State:</strong> {invoice.state || "-"}</Text>
-                <Text><strong>Bill Category:</strong> {invoice.mybillCategory || "-"}</Text>
-                <Text><strong>Milestone:</strong> {invoice.milestone || "-"}</Text>
-                <Text><strong>Invoice Date:</strong> {fmtDate(invoice.invoiceDate)}</Text>
-                <Text><strong>Submission Date:</strong> {fmtDate(invoice.submissionDate)}</Text>
-                <Text><strong>Payment Date:</strong> {fmtDate(invoice.paymentDate)}</Text>
-                <Text><strong>Remarks:</strong> {invoice.remarks || "-"}</Text>
+    <Stack gap="0" style={{ minHeight: "100vh"}}>
+      {/* Header Section */}
+      <Paper 
+        p="0" 
+        radius="0" 
+        style={{ 
+          background: "#ffffff",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)"
+        }}
+      >
+        <Stack gap="0" style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ padding: "1rem 2rem", display: "flex", justifyContent: "flex-end" }}>
+            <Button variant="subtle" size="sm" onClick={() => navigate("/dashboard-2")}>
+              ← Back to Dashboard
+            </Button>
+          </div>
+          <div style={{ padding: "2rem 2rem 3rem 2rem" }}>
+            <Group justify="space-between" align="flex-start" wrap="wrap" gap="2rem">
+              <Stack gap="xl" style={{ flex: 1, minWidth: 300 }}>
+                <div>
+                  <Text size="xs" c="gray.6" tt="uppercase" fw={600} >Invoice Document</Text>
+                  <Title 
+                    order={1} 
+                    style={{ 
+                      fontSize: rem(44), 
+                      fontWeight: 900, 
+                      color: "#1a1a1a",
+                      marginTop: "0.75rem",
+                      letterSpacing: "-1px"
+                    }}
+                  >
+                    #{invoice.invoiceNumber}
+                  </Title>
+                </div>
+                <Group gap="md">
+                  <Badge 
+                    size="lg" 
+                    color={
+                      invoice.status === "Paid"
+                            ? "#20c997"
+                            : invoice.status === "Under process"
+                            ? "#228be6"
+                            : invoice.status === "Cancelled"
+                            ? "#fa5252"
+                            : "#FFBF00"
+                    } 
+                    variant="light" 
+                    style={{ fontSize: rem(12), padding: "8px 14px", fontWeight: 600 }}
+                  >
+                    {invoice.status === "Paid" ? "✓ " : ""}{invoice.status}
+                  </Badge>
+                  <Text c="gray.7" fw={500} size="sm">Invoice Date • {fmtDate(invoice.invoiceDate)}</Text>
+                </Group>
               </Stack>
+              
+              <Group gap="xl" align="flex-start">
+                <Paper 
+                  p="lg" 
+                  radius="lg" 
+                  shadow="sm"
+                  withBorder
+                  style={{ 
+                    background: "#f8f9fa",
+                    border: "1px solid #e9ecef",
+                    minWidth: "160px",
+                    textAlign: "center"
+                  }}
+                >
+                  <Stack gap="sm">
+                    <Text size="xs" c="gray.6" tt="uppercase" fw={600} >Net Payable</Text>
+                    <Text fw={900} c="blue.7" style={{ fontSize: rem(26) }}>₹{netPayable.toLocaleString()}</Text>
+                  </Stack>
+                </Paper>
+                
+                <Paper 
+                  p="lg" 
+                  radius="lg" 
+                  shadow="sm"
+                  withBorder
+                  style={{ 
+                    background: balance > 0 ? "#fff5f5" : "#f0fff4",
+                    border: balance > 0 ? "1px solid #ffe0e0" : "1px solid #e0f9e3",
+                    minWidth: "160px",
+                    textAlign: "center"
+                  }}
+                >
+                  <Stack gap="sm">
+                    <Text size="xs" c="gray.6" tt="uppercase" fw={600} >Balance Due</Text>
+                    <Text fw={900} c={balance > 0 ? "red.7" : "green.7"} style={{ fontSize: rem(26) }}>₹{balance.toLocaleString()}</Text>
+                  </Stack>
+                </Paper>
+              </Group>
+            </Group>
+          </div>
+        </Stack>
+      </Paper>
+
+      {/* Main Content */}
+      <div ref={invoiceRef} style={{ flex: 1, display: "flex", justifyContent: "center", padding: "2rem 1rem" }}>
+        <Stack gap="lg" style={{ width: "100%", maxWidth: 1000 }}>
+          
+          {/* Basic Info Card */}
+          <Paper p="lg" radius="lg" shadow="md" withBorder style={{ background: "#fff" }}>
+            <Stack gap="md">
+              <Title order={4} style={{ fontSize: rem(18), fontWeight: 700, color: "#1a1a1a" }}>
+                📋 Invoice Information
+              </Title>
+              <Grid gutter="xl">
+                <Grid.Col span={{ base: 12, sm: 6 }}>
+                  <Stack gap="sm">
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Project</Text>
+                      <Text fw={700} c="blue.7">{fmtProject(invoice.project)}</Text>
+                    </Group>
+                    <Divider my={0} color="gray.2"/>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Mode of Project</Text>
+                      <Text fw={600}>{invoice.modeOfProject || "-"}</Text>
+                    </Group>
+                    <Divider my={0} color="gray.2"/>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">State</Text>
+                      <Text fw={600}>{invoice.state || "-"}</Text>
+                    </Group>
+                    <Divider my={0} color="gray.2"/>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Bill Category</Text>
+                      <Text fw={600}>{invoice.mybillCategory || "-"}</Text>
+                    </Group>
+                    <Divider my={0} color="gray.2"/>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Milestone</Text>
+                      <Text fw={600}>{invoice.milestone || "-"}</Text>
+                    </Group>
+                  </Stack>
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, sm: 6 }}>
+                  <Stack gap="sm">
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Invoice Date</Text>
+                      <Text fw={700} c="blue.7">{fmtDate(invoice.invoiceDate)}</Text>
+                    </Group>
+                    <Divider my={0} color="gray.2"/>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Submission Date</Text>
+                      <Text fw={600}>{fmtDate(invoice.submissionDate)}</Text>
+                    </Group>
+                    <Divider my={0} color="gray.2"/>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Payment Date</Text>
+                      <Text fw={600}>{fmtDate(invoice.paymentDate)}</Text>
+                    </Group>
+                    <Divider my={0} color="gray.2"/>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Remarks</Text>
+                      <Text fw={600} ta="right" style={{ maxWidth: "60%" }}>{invoice.remarks || "-"}</Text>
+                    </Group>
+                  </Stack>
+                </Grid.Col>
+              </Grid>
+            </Stack>
+          </Paper>
+
+          {/* Amount Breakdown Cards */}
+          <Grid gutter="lg">
+            {/* Left: Basic Amount */}
+            <Grid.Col span={{ base: 12, sm: 6 }}>
+              <Paper p="lg" radius="lg" shadow="md" withBorder style={{ background: "#f8f9ff" }}>
+                <Stack gap="md">
+                  <Title order={4} style={{ fontSize: rem(16), fontWeight: 700 }}>💰 Basic Amount</Title>
+                  <Stack gap="xs">
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Invoice Basic Amount</Text>
+                      <Text fw={700} c="blue.7" size="lg">₹{num(invoice.invoiceBasicAmount).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">GST Percentage</Text>
+                      <Text fw={600}>{invoice.gstPercentage || "-"}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">GST Amount</Text>
+                      <Text fw={700} c="blue.7" size="lg">₹{num(num(invoice.invoiceBasicAmount) * parseGst(invoice.gstPercentage) / 100).toLocaleString()}</Text>
+                    </Group>
+                    <Divider my="xs" color="gray.3"/>
+                    <Group justify="space-between">
+                      <Text fw={700} size="sm">Total Amount</Text>
+                      <Text fw={800} c="blue.8" size="lg">₹{num(invoice.totalAmount).toLocaleString()}</Text>
+                    </Group>
+                  </Stack>
+                </Stack>
+              </Paper>
             </Grid.Col>
 
-            <Grid.Col span={6}>
-              <Stack gap="sm">
-                <Text><strong>Invoice Basic Amount:</strong> <span style={{ color: '#1971c2' }}>₹{num(invoice.invoiceBasicAmount)}</span></Text>
-                <Text><strong>GST Percentage:</strong> {invoice.gstPercentage || "-"}</Text>
-                <Text><strong>Invoice GST Amount:</strong> <span style={{ color: '#1971c2' }}>₹{num(num(invoice.invoiceBasicAmount) * parseGst(invoice.gstPercentage) / 100)}</span></Text>
-                <Text><strong>Total Amount:</strong> <span style={{ color: '#1971c2' }}>₹{num(invoice.totalAmount)}</span></Text>
-                <Text><strong>Passed Amount by Client:</strong> ₹{num(invoice.passedAmountByClient)}</Text>
-                <Text><strong>Retention:</strong> ₹{num(invoice.retention)}</Text>
-                <Text><strong>GST Withheld:</strong> ₹{num(invoice.gstWithheld)}</Text>
-                <Text><strong>TDS:</strong> ₹{num(invoice.tds)}</Text>
-                <Text><strong>GST TDS:</strong> ₹{num(invoice.gstTds)}</Text>
-                <Text><strong>BOCW:</strong> ₹{num(invoice.bocw)}</Text>
-                <Text><strong>Low Depth Deduction:</strong> ₹{num(invoice.lowDepthDeduction)}</Text>
-                <Text><strong>LD:</strong> ₹{num(invoice.ld)}</Text>
-                <Text><strong>SLA Penalty:</strong> ₹{num(invoice.slaPenalty)}</Text>
-                <Text><strong>Penalty:</strong> ₹{num(invoice.penalty)}</Text>
-                <Text><strong>Other Deduction:</strong> ₹{num(invoice.otherDeduction)}</Text>
-                <Divider my="xs" color="gray.2"/>
-                <Text fw={700} size="lg" c="red.7"><strong>Total Deduction:</strong> ₹{num(totalDeduction)}</Text>
-                <Text fw={700} size="lg" c="blue.7"><strong>Net Payable:</strong> ₹{num(netPayable)}</Text>
-                <Text fw={700} size="lg" c="teal.7"><strong>Amount Paid:</strong> ₹{num(invoice.amountPaidByClient)}</Text>
-                <Text fw={700} size="lg" c="teal.7"><strong>Balance:</strong> ₹{num(balance)}</Text>
-              </Stack>
+            {/* Right: Payment Status */}
+            <Grid.Col span={{ base: 12, sm: 6 }}>
+              <Paper p="lg" radius="lg" shadow="md" withBorder style={{ background: "#f0fff4" }}>
+                <Stack gap="md">
+                  <Title order={4} style={{ fontSize: rem(16), fontWeight: 700 }}>✅ Payment Status</Title>
+                  <Stack gap="xs">
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Passed Amount by Client</Text>
+                      <Text fw={700} c="green.7" size="lg">₹{num(invoice.passedAmountByClient).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Amount Paid</Text>
+                      <Text fw={700} c="teal.7" size="lg">₹{num(invoice.amountPaidByClient).toLocaleString()}</Text>
+                    </Group>
+                    <Divider my="xs" color="gray.3"/>
+                    <Group justify="space-between">
+                      <Text fw={700} size="sm">Net Payable</Text>
+                      <Text fw={800} c="blue.8" size="lg">₹{num(netPayable).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text fw={700} size="sm">Balance</Text>
+                      <Text fw={800} c={balance > 0 ? "red.8" : "green.8"} size="lg">₹{num(balance).toLocaleString()}</Text>
+                    </Group>
+                  </Stack>
+                </Stack>
+              </Paper>
             </Grid.Col>
           </Grid>
-        </Paper>
+
+
+          {/* Deductions Section */}
+          <Paper p="lg" radius="lg" shadow="md" withBorder style={{ background: "#fff5f5" }}>
+            <Stack gap="md">
+              <Title order={4} style={{ fontSize: rem(16), fontWeight: 700 }}>📊 Deductions & Adjustments</Title>
+              <Grid gutter="md">
+                <Grid.Col span={{ base: 12, sm: 6 }}>
+                  <Stack gap="xs">
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Retention</Text>
+                      <Text fw={600}>₹{num(invoice.retention).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">GST Withheld</Text>
+                      <Text fw={600}>₹{num(invoice.gstWithheld).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">TDS</Text>
+                      <Text fw={600}>₹{num(invoice.tds).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">GST TDS</Text>
+                      <Text fw={600}>₹{num(invoice.gstTds).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">BOCW</Text>
+                      <Text fw={600}>₹{num(invoice.bocw).toLocaleString()}</Text>
+                    </Group>
+                  </Stack>
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, sm: 6 }}>
+                  <Stack gap="xs">
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Low Depth Deduction</Text>
+                      <Text fw={600}>₹{num(invoice.lowDepthDeduction).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">LD</Text>
+                      <Text fw={600}>₹{num(invoice.ld).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">SLA Penalty</Text>
+                      <Text fw={600}>₹{num(invoice.slaPenalty).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Penalty</Text>
+                      <Text fw={600}>₹{num(invoice.penalty).toLocaleString()}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text c="dimmed" fw={500} size="sm">Other Deduction</Text>
+                      <Text fw={600}>₹{num(invoice.otherDeduction).toLocaleString()}</Text>
+                    </Group>
+                  </Stack>
+                </Grid.Col>
+              </Grid>
+              <Divider my="xs" color="gray.3"/>
+              <Group justify="flex-end">
+                <Text fw={700} size="lg">Total Deduction:</Text>
+                <Text fw={800} c="red.8" size="lg">₹{num(totalDeduction).toLocaleString()}</Text>
+              </Group>
+            </Stack>
+          </Paper>
+
+          {/* Invoice Documents Section */}
+          <Paper p="lg" radius="lg" shadow="md" withBorder style={{ background: '#f8f9ff' }}>
+            <Stack gap="md">
+              <Title order={4} style={{ fontSize: rem(16), fontWeight: 700, color: '#1a1a1a' }}>📁 Invoice Documents</Title>
+              <Grid gutter="lg">
+                <Grid.Col span={{ base: 12, sm: 4 }}>
+                  <Stack gap="xs" align="flex-start" style={{ padding: '0 0.5rem' }}>
+                    <Text fw={500} size="sm">Invoice Copy</Text>
+                    {invoice.invoice_copy_path ? (
+                      <a
+                        href={`/api/v1/files/${encodeURIComponent(invoice.invoice_copy_path.split(/[/\\]/).pop() || '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: '#1971c2',
+                          fontWeight: 500,
+                          textDecoration: 'underline',
+                          wordBreak: 'break-all',
+                          fontSize: rem(14)
+                        }}
+                      >
+                        {/* {invoice.invoice_copy_path.split(/[/\\]/).pop()} */}
+                        View File
+                      </a>
+                    ) : (
+                      <Text c="dimmed" size="xs">No file uploaded</Text>
+                    )}
+                  </Stack>
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, sm: 4 }}>
+                  <Stack gap="xs" align="flex-start" style={{ padding: '0 0.5rem' }}>
+                    <Text fw={500} size="sm">Proof of Submission</Text>
+                    {invoice.proof_of_submission_path ? (
+                      <a
+                        href={`/api/v1/files/${encodeURIComponent(invoice.proof_of_submission_path.split(/[/\\]/).pop() || '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: '#1971c2',
+                          fontWeight: 500,
+                          textDecoration: 'underline',
+                          wordBreak: 'break-all',
+                          fontSize: rem(14)
+                        }}
+                      >
+                        {/* {invoice.proof_of_submission_path.split(/[/\\]/).pop()} */}
+                        View File
+                      </a>
+                    ) : (
+                      <Text c="dimmed" size="xs">No file uploaded</Text>
+                    )}
+                  </Stack>
+                </Grid.Col>
+                <Grid.Col span={{ base: 12, sm: 4 }}>
+                  <Stack gap="xs" align="flex-start" style={{ padding: '0 0.5rem' }}>
+                    <Text fw={500} size="sm">Supporting Documents</Text>
+                    {invoice.supporting_docs_path ? (
+                      <a
+                        href={`/api/v1/files/${encodeURIComponent(invoice.supporting_docs_path.split(/[/\\]/).pop() || '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: '#1971c2',
+                          fontWeight: 500,
+                          textDecoration: 'underline',
+                          wordBreak: 'break-all',
+                          fontSize: rem(14)
+                        }}
+                      >
+                        {/* {invoice.supporting_docs_path.split(/[/\\]/).pop()} */}
+                        View File
+                      </a>
+                    ) : (
+                      <Text c="dimmed" size="xs">No file uploaded</Text>
+                    )}
+                  </Stack>
+                </Grid.Col>
+              </Grid>
+            </Stack>
+          </Paper>
+
+        </Stack>
       </div>
 
-      <Group mt="xl" gap="md" style={{ width: "100%", maxWidth: 900, justifyContent: "center" }}>
-        <Button variant="outline" onClick={() => navigate(-1)}>← Back</Button>
-        <Button variant="filled" color="blue" onClick={handlePrint}>🖨 Print</Button>
-      </Group>
+      {/* Footer Buttons */}
+      <Paper p="lg" radius="0" shadow="md" style={{ background: "rgba(255, 255, 255, 0.95)" }}>
+        <Group justify="center" gap="lg" style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <Button variant="outline" size="lg" onClick={() => navigate(-1)}>
+            ← Back
+          </Button>
+          <Button variant="filled" color="blue" size="lg" onClick={handlePrint}>
+            🖨 Print Invoice
+          </Button>
+        </Group>
+      </Paper>
     </Stack>
   );
 }

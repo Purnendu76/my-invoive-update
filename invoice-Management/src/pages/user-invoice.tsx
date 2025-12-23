@@ -163,9 +163,13 @@ export default function User_invoice() {
         <Table striped highlightOnHover withTableBorder>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Invoice</Table.Th>
+              <Table.Th>Invoice No.</Table.Th>
               <Table.Th>Invoice Date</Table.Th>
+              <Table.Th>Basic Amount (₹)</Table.Th>
+              <Table.Th>GST Amount (₹)</Table.Th>
               <Table.Th>Total Amount (₹)</Table.Th>
+              <Table.Th>Total Deduction (₹)</Table.Th>
+              <Table.Th>Net Payable (₹)</Table.Th>
               <Table.Th>Amount Paid (₹)</Table.Th>
               <Table.Th>Balance (₹)</Table.Th>
               <Table.Th>Status</Table.Th>
@@ -173,62 +177,80 @@ export default function User_invoice() {
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {filteredInvoices.map((invoice) => (
-              <Table.Tr key={invoice.id}>
-                <Table.Td>
-                  <Link
-                    to={`/user-invoice/${invoice.invoiceNumber}`}
-                    style={{ color: "#1c7ed6", textDecoration: "none", cursor: "pointer" }}
-                  >
-                    {invoice.invoiceNumber}
-                  </Link>
-                </Table.Td>
-                <Table.Td>
-                  {invoice.invoiceDate
-                    ? invoice.invoiceDate.toLocaleDateString()
-                    : "-"}
-                </Table.Td>
-                <Table.Td>₹{formatMoney(invoice.totalAmount)}</Table.Td>
-                <Table.Td>₹{formatMoney(invoice.amountPaidByClient)}</Table.Td>
-                <Table.Td>₹{formatMoney(invoice.balance)}</Table.Td>
-                <Table.Td>
-                  <Badge
-                    color={
-                      invoice.status === "Paid"
-                        ? "green"
-                        : invoice.status === "Under process"
-                        ? "yellow"
-                        : "red"
-                    }
-                  >
-                    {invoice.status}
-                  </Badge>
-                </Table.Td>
-                <Table.Td>
-                  <Group gap="xs">
-                    <ActionIcon
-                      color="blue"
-                      variant="light"
-                      onClick={() => handleEdit(invoice)}
-                      disabled={invoice.status === "Paid"}
-                      style={invoice.status === "Paid" ? { opacity: 0.5, pointerEvents: "none" } : {}}
+            {filteredInvoices.map((invoice) => {
+              // Calculate values (fallbacks to 0 if missing)
+              const basicAmount = Number(invoice.basicAmount ?? 0);
+              const gstAmount = Number(invoice.gstAmount ?? 0);
+              const totalAmount = Number(invoice.totalAmount ?? 0);
+              const totalDeduction = Number(invoice.totalDeduction ?? 0);
+              const netPayable = Number(invoice.netPayable ?? 0);
+              const amountPaid = Number(invoice.amountPaidByClient ?? 0);
+              const balance = Number(invoice.balance ?? 0);
+              return (
+                <Table.Tr key={invoice.id}>
+                  <Table.Td>
+                    <Link
+                      to={`/user-invoice/${invoice.invoiceNumber}`}
+                      style={{ color: "#1c7ed6", textDecoration: "none", cursor: "pointer" }}
                     >
-                      <IconEdit size={16} />
-                    </ActionIcon>
-                    <ActionIcon
-                      color="red"
-                      variant="light"
-                      onClick={() => handleDelete(invoice.id)}
+                      {invoice.invoiceNumber}
+                    </Link>
+                  </Table.Td>
+                  <Table.Td>
+                    {invoice.invoiceDate
+                      ? invoice.invoiceDate.toLocaleDateString()
+                      : "-"}
+                  </Table.Td>
+                  <Table.Td>₹{formatMoney(basicAmount)}</Table.Td>
+                  <Table.Td>₹{formatMoney(gstAmount)}</Table.Td>
+                  <Table.Td>₹{formatMoney(totalAmount)}</Table.Td>
+                  <Table.Td>₹{formatMoney(totalDeduction)}</Table.Td>
+                  <Table.Td>₹{formatMoney(netPayable)}</Table.Td>
+                  <Table.Td>₹{formatMoney(amountPaid)}</Table.Td>
+                  <Table.Td>₹{formatMoney(balance)}</Table.Td>
+                  <Table.Td>
+                    <Badge
+                      color={
+                        invoice.status === "Paid"
+                          ? "green"
+                          : invoice.status === "Under process"
+                          ? "yellow"
+                          : invoice.status === "Credit Note Issued"
+                          ? "blue"
+                          : "red"
+                      }
                     >
-                      <IconTrash size={16} />
-                    </ActionIcon>
-                    <ActionIcon color="gray" variant="light" onClick={() => { setSelectedInvoice(invoice); setViewModalOpen(true); }}>
-                      <IconEye size={16} />
-                    </ActionIcon>
-                  </Group>
-                </Table.Td>
-              </Table.Tr>
-            ))}
+                      {invoice.status}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Group gap="xs">
+                      <ActionIcon
+                        color="blue"
+                        variant="light"
+                        onClick={() => handleEdit(invoice)}
+                        disabled={invoice.status === "Paid"}
+                        style={invoice.status === "Paid" ? { opacity: 0.5, pointerEvents: "none" } : {}}
+                      >
+                        <IconEdit size={16} />
+                      </ActionIcon>
+                      <ActionIcon
+                        color="red"
+                        variant="light"
+                        onClick={() => handleDelete(invoice.id)}
+                        disabled={invoice.status === "Paid" || invoice.status === "Under process"}
+                        style={invoice.status === "Paid" ? { opacity: 0.5, pointerEvents: "none" } : {}}
+                      >
+                        <IconTrash size={16} />
+                      </ActionIcon>
+                      <ActionIcon color="green" variant="light" onClick={() => { setSelectedInvoice(invoice); setViewModalOpen(true); }}>
+                        <IconEye size={16} />
+                      </ActionIcon>
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              );
+            })}
           </Table.Tbody>
         </Table>
       )}

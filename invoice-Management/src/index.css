@@ -183,3 +183,8 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+
+.m_e615b15f.mantine-Card-root.m_1b7284a3.mantine-Paper-root {
+  height: 100%;
+}

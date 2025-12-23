@@ -134,6 +134,27 @@
       "when": 1765341610127,
       "tag": "0018_sudden_longshot",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1765777712167,
+      "tag": "0019_fuzzy_yellowjacket",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1765778126123,
+      "tag": "0020_fair_warbound",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1765951238968,
+      "tag": "0021_fine_kid_colt",
+      "breakpoints": true
     }
   ]
 }

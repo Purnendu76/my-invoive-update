@@ -1,0 +1,1 @@
+ALTER TABLE "my-invoicees" ALTER COLUMN "submission_date" DROP NOT NULL;

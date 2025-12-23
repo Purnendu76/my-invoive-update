@@ -7,8 +7,11 @@ type PrivateRouteProps = {
   allowedRoles?: Array<"Admin" | "user">;
 };
 
+import { useLocation } from "react-router-dom";
+
 export default function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
   const role = getUserRole();
+  // const location = useLocation();
 
   // ✅ If no token/role, go to login *immediately*
   if (!role) return <Navigate to="/" replace />;
@@ -17,6 +20,11 @@ export default function PrivateRoute({ children, allowedRoles }: PrivateRoutePro
   if (allowedRoles && !allowedRoles.includes(role)) {
     return <Navigate to="/" replace />;
   }
+
+  // ✅ If user is authenticated/authorized and at '/', redirect to '/dashboard-2'
+  // if (location.pathname === "") {
+  //   return <Navigate to="/dashboard-2" replace />;
+  // }
 
   return <>{children}</>;
 }

@@ -53,7 +53,7 @@ export const milestoneEnum = pgEnum(
 
 export const gstPercentageEnum = pgEnum(
   "gst_percentage",
-  ["0","5%", "12%", "18%"],
+  ["0%","5%", "12%", "18%"],
   { ifNotExists: true }
 );
 
@@ -92,7 +92,7 @@ export const invoices = pgTable("my-invoicees", {
 
   invoiceNumber: varchar("invoice_number", { length: 255 }).notNull(),
   invoiceDate: date("invoice_date").notNull(),
-  submissionDate: date("submission_date").notNull(),
+  submissionDate: date("submission_date"),
 
   invoiceBasicAmount: numeric("invoice_basic_amount").notNull(),
   gstPercentage: gstPercentageEnum("gst_percentage").notNull(),
@@ -121,5 +121,7 @@ export const invoices = pgTable("my-invoicees", {
   balance: numeric("balance").notNull().default("0"),
 
   remarks: text("remarks"),
-  document_path: varchar("document_path", { length: 255 }), // file path for uploaded document
+  invoice_copy_path: varchar("invoice_copy_path", { length: 255 }), // file path for Invoice Copy
+  proof_of_submission_path: varchar("proof_of_submission_path", { length: 255 }), // file path for Proof of Submission
+  supporting_docs_path: varchar("supporting_docs_path", { length: 255 }), // file path for Supporting Documents
 });

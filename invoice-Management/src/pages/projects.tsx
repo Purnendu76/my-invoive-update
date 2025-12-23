@@ -1,3 +1,12 @@
+  // Project to mode mapping
+  const projectModeMap: Record<string, string> = {
+    "NFS": "Back To Back",
+    "GAIL": "Direct",
+    "BGCL": "Direct",
+    "STP": "Direct",
+    "BHARAT NET": "Direct",
+    "NFS AMC": "Back To Back",
+  };
 import { useEffect, useState, useMemo } from "react";
 import {
   Table,
@@ -10,6 +19,7 @@ import {
   Button,
   Modal,
   TextInput,
+  Select,
   
 } from "@mantine/core";
 import { IconSearch, IconPlus } from "@tabler/icons-react";
@@ -91,16 +101,27 @@ export function AddProject() {
 
   // Add Project form
   const addProjectForm = useForm({
-    initialValues: { projectName: "" },
+    initialValues: {
+      projectName: "",
+      workOrderNumber: "",
+      billCategory: "",
+      modeOfProject: "",
+      state: "",
+    },
     validate: {
       projectName: (v) =>
         v.trim().length < 2 ? "Project name must be at least 2 characters" : null,
+      modeOfProject: (v) => !v ? "Mode of Project is required" : null,
     },
   });
 
   const handleAddProject = async (values: typeof addProjectForm.values) => {
     const name = values.projectName.trim();
     if (!name) return;
+    if (!values.modeOfProject) {
+      notifyError("Mode of Project is required");
+      return;
+    }
 
     // optimistic UI: add to local list
     const newProj: ProjectSummary = {
@@ -116,7 +137,6 @@ export function AddProject() {
     setModalOpen(false);
 
     try {
- 
       notifySuccess("Project added successfully");
     } catch (err) {
       console.error("Failed to persist project to server:", err);
@@ -179,6 +199,7 @@ export function AddProject() {
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Project</Table.Th>
+              <Table.Th>Mode of Project</Table.Th>
               <Table.Th>Invoices</Table.Th>
               <Table.Th>Total Amount (₹)</Table.Th>
               <Table.Th>Paid (₹)</Table.Th>
@@ -200,6 +221,7 @@ export function AddProject() {
                     {proj.project}
                   </Badge>
                 </Table.Td>
+                <Table.Td>{projectModeMap[proj.project] || "-"}</Table.Td>
                 <Table.Td>{proj.invoiceCount}</Table.Td>
                 <Table.Td>₹{formatMoney(proj.totalAmount)}</Table.Td>
                 <Table.Td>₹{formatMoney(proj.paidAmount)}</Table.Td>
@@ -227,6 +249,34 @@ export function AddProject() {
               label="Project Name"
               placeholder="e.g. NFS"
               {...addProjectForm.getInputProps("projectName")}
+            />
+            <TextInput
+              label="Work Order Number"
+              placeholder="Enter work order number"
+              type="number"
+              {...addProjectForm.getInputProps("workOrderNumber")}
+            />
+            <Select
+              label="Bill Category"
+              placeholder="Select bill category"
+              data={["Service","Supply","ROW","AMC","Restoration Service","Restoration Supply","Restoration Row","Spares","Training"]}
+              clearable
+              {...addProjectForm.getInputProps("billCategory")}
+            />
+            <Select
+              label="Mode of Project"
+              placeholder="Select mode"
+              data={["Back To Back","Direct"]}
+              required
+              error={addProjectForm.errors.modeOfProject}
+              {...addProjectForm.getInputProps("modeOfProject")}
+            />
+            <Select
+              label="State"
+              placeholder="Select state"
+              data={["West Bengal","Delhi","Bihar","MP","Kerala","Sikkim","Jharkhand","Andaman"]}
+              clearable
+              {...addProjectForm.getInputProps("state")}
             />
             <Group mt="md">
               <Button type="submit">Create</Button>

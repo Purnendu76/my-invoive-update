@@ -14,6 +14,8 @@ import {
   Paper,
   Divider,
   FileInput,
+  ActionIcon,
+  Tooltip,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import axios from "axios";
@@ -21,7 +23,7 @@ import { notifySuccess, notifyError, notifyWarning } from "../lib/utils/notify";
 import { usePrefillInvoiceForm } from "../hooks/usePrefillInvoiceForm";
 import type { Invoice } from "@/interface/Invoice";
 import Cookies from "js-cookie";
-import { IconUpload } from "@tabler/icons-react";
+import { IconUpload, IconEye, IconTrash } from "@tabler/icons-react";
 
 type InvoiceFormProps = {
   onSubmit?: (data: { client: string; amount: number }) => void;
@@ -61,7 +63,7 @@ export default function InvoiceForm({
   ];
   const milestones = ["60%", "90%", "100%"];
   const gstOptions = ["0%", "5%", "12%", "18%"];
-  const statuses = ["Paid", "Cancelled", "Under process", "Credit Note Issued"];
+  const statuses = ["Paid", "Under process", "Credit Note Issued", "Cancelled", ];
 
   // Dropdown style
   const dropdownStyles = {
@@ -74,6 +76,25 @@ export default function InvoiceForm({
   const adminProjects = ["NFS", "GAIL", "BGCL", "STP", "BHARAT NET", "NFS AMC"];
 
   const [mode, setMode] = useState<string | null>(null);
+
+  // Project to mode mapping
+  const projectModeMap: Record<string, string> = {
+    "NFS": "Back To Back",
+    "GAIL": "Direct",
+    "BGCL": "Direct",
+    "STP": "Direct",
+    "Bharat Net": "Direct",
+    "NFS AMC": "Back To Back",
+  };
+
+  // Set mode automatically when project changes
+  useEffect(() => {
+    if (project && projectModeMap[project]) {
+      setMode(projectModeMap[project]);
+    } else {
+      setMode("");
+    }
+  }, [project]);
   const [state, setState] = useState<string | null>(null);
   const [billCategory, setBillCategory] = useState<string | null>(null);
   const [milestone, setMilestone] = useState<string | null>(null);
@@ -97,7 +118,15 @@ export default function InvoiceForm({
   const [slaPenalty, setSlaPenalty] = useState<number | "">("");
   const [penalty, setPenalty] = useState<number | "">("");
   const [otherDeduction, setOtherDeduction] = useState<number | "">("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // File upload states for three documents
+  const [invoiceCopy, setInvoiceCopy] = useState<File | null>(null);
+  const [proofOfSubmission, setProofOfSubmission] = useState<File | null>(null);
+  const [supportingDocs, setSupportingDocs] = useState<File | null>(null);
+  // For edit mode, store the existing file paths (if any)
+  const [existingInvoiceCopy, setExistingInvoiceCopy] = useState<string | null>(null);
+  const [existingProofOfSubmission, setExistingProofOfSubmission] = useState<string | null>(null);
+  const [existingSupportingDocs, setExistingSupportingDocs] = useState<string | null>(null);
+  const [removingFile, setRemovingFile] = useState(false);
 
   // Default status
   const [status, setStatus] = useState<string | null>("Under process");
@@ -168,6 +197,43 @@ export default function InvoiceForm({
     },
   });
 
+  // When editing, show the existing file name if present
+  useEffect(() => {
+    // For edit mode, set existing file paths if present in initialValues
+    if (initialValues) {
+      setExistingInvoiceCopy(initialValues.invoice_copy_path || null);
+      setExistingProofOfSubmission(initialValues.proof_of_submission_path || null);
+      setExistingSupportingDocs(initialValues.supporting_docs_path || null);
+    } else {
+      setExistingInvoiceCopy(null);
+      setExistingProofOfSubmission(null);
+      setExistingSupportingDocs(null);
+    }
+    setInvoiceCopy(null);
+    setProofOfSubmission(null);
+    setSupportingDocs(null);
+  }, [initialValues]);
+
+  // Remove file handler for each document
+  const handleRemoveFile = async (type: 'invoiceCopy' | 'proofOfSubmission' | 'supportingDocs') => {
+    if (!initialValues?.id) return;
+    setRemovingFile(true);
+    try {
+      const baseEndpoint = userRole === "Admin" ? "/api/v1/invoices" : "/api/v1/user-invoices";
+      await axios.delete(`${baseEndpoint}/${initialValues.id}/file?type=${type}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (type === 'invoiceCopy') setExistingInvoiceCopy(null);
+      if (type === 'proofOfSubmission') setExistingProofOfSubmission(null);
+      if (type === 'supportingDocs') setExistingSupportingDocs(null);
+      notifySuccess("File removed successfully");
+    } catch (err) {
+      notifyError("Failed to remove file");
+    } finally {
+      setRemovingFile(false);
+    }
+  };
+
   // Derived values
   const gstAmount =
     basicAmount && gstPercentage
@@ -175,6 +241,7 @@ export default function InvoiceForm({
       : 0;
   const totalDeduction =
     Number(retention || 0) +
+    // Number(gstWithheld || 0) +
     Number(tds || 0) +
     Number(gstTds || 0) +
     Number(bocw || 0) +
@@ -201,7 +268,6 @@ export default function InvoiceForm({
       billCategory,
       invoiceNumber,
       invoiceDate,
-      submissionDate,
       basicAmount,
       gstPercentage,
       status,
@@ -218,6 +284,26 @@ export default function InvoiceForm({
     if (paymentDate && submissionDate && paymentDate < submissionDate) {
       notifyError("Payment date must be later than Submission Date ❌");
       return;
+    }
+
+    // Prevent future dates for invoiceDate and submissionDate (allow today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (invoiceDate) {
+      const invoiceDateCopy = new Date(invoiceDate);
+      invoiceDateCopy.setHours(0, 0, 0, 0);
+      if (invoiceDateCopy.getTime() > today.getTime()) {
+        notifyError("Invoice Date cannot be in the future ❌");
+        return;
+      }
+    }
+    if (submissionDate) {
+      const submissionDateCopy = new Date(submissionDate);
+      submissionDateCopy.setHours(0, 0, 0, 0);
+      if (submissionDateCopy.getTime() > today.getTime()) {
+        notifyError("Submission Date cannot be in the future ❌");
+        return;
+      }
     }
 
     // Duplicate invoice number check (omitted strictly for brevity, keep your original logic here)
@@ -241,68 +327,55 @@ export default function InvoiceForm({
         return;
       }
 
-      // Use FormData for file upload
+      // Prepare payload for PUT (edit) and POST (create)
+      const payload = {
+        project: project || "",
+        modeOfProject: mode || "",
+        state: state || "",
+        mybillCategory: billCategory || "",
+        milestone: milestone || undefined,
+        invoiceNumber,
+        invoiceDate: invoiceDate ? invoiceDate.toISOString().split("T")[0] : undefined,
+        submissionDate: submissionDate ? submissionDate.toISOString().split("T")[0] : undefined,
+        invoiceBasicAmount: basicAmount ? String(basicAmount) : "0",
+        gstPercentage: gstPercentage || "",
+        invoiceGstAmount: String(gstAmount),
+        totalAmount: totalAmount ? String(totalAmount) : "0",
+        passedAmountByClient: passedAmount ? String(passedAmount) : "0",
+        retention: retention ? String(retention) : "0",
+        gstWithheld: gstWithheld ? String(gstWithheld) : "0",
+        tds: tds ? String(tds) : "0",
+        gstTds: gstTds ? String(gstTds) : "0",
+        bocw: bocw ? String(bocw) : "0",
+        lowDepthDeduction: lowDepth ? String(lowDepth) : "0",
+        ld: ld ? String(ld) : "0",
+        slaPenalty: slaPenalty ? String(slaPenalty) : "0",
+        penalty: penalty ? String(penalty) : "0",
+        otherDeduction: otherDeduction ? String(otherDeduction) : "0",
+        totalDeduction: String(totalDeduction),
+        netPayable: String(netPayable),
+        status: status || "",
+        amountPaidByClient: amountPaid ? String(amountPaid) : "0",
+        paymentDate: paymentDate ? paymentDate.toISOString().split("T")[0] : undefined,
+        balance: String(balance),
+        remarks: remarks || "",
+      };
+
+      // Always use FormData for file uploads
       const formData = new FormData();
-      formData.append("project", project || "");
-      formData.append("modeOfProject", mode || "");
-      formData.append("state", state || "");
-      formData.append("mybillCategory", billCategory || "");
-      if (milestone) formData.append("milestone", milestone);
-      formData.append("invoiceNumber", invoiceNumber);
-      if (invoiceDate)
-        formData.append("invoiceDate", invoiceDate.toISOString().split("T")[0]);
-      if (submissionDate)
-        formData.append(
-          "submissionDate",
-          submissionDate.toISOString().split("T")[0]
-        );
-      formData.append(
-        "invoiceBasicAmount",
-        basicAmount ? String(basicAmount) : "0"
-      );
-      formData.append("gstPercentage", gstPercentage || "");
-      formData.append("invoiceGstAmount", String(gstAmount));
-      formData.append("totalAmount", totalAmount ? String(totalAmount) : "0");
-      formData.append(
-        "passedAmountByClient",
-        passedAmount ? String(passedAmount) : "0"
-      );
-      formData.append("retention", retention ? String(retention) : "0");
-      formData.append("gstWithheld", gstWithheld ? String(gstWithheld) : "0");
-      formData.append("tds", tds ? String(tds) : "0");
-      formData.append("gstTds", gstTds ? String(gstTds) : "0");
-      formData.append("bocw", bocw ? String(bocw) : "0");
-      formData.append("lowDepthDeduction", lowDepth ? String(lowDepth) : "0");
-      formData.append("ld", ld ? String(ld) : "0");
-      formData.append("slaPenalty", slaPenalty ? String(slaPenalty) : "0");
-      formData.append("penalty", penalty ? String(penalty) : "0");
-      formData.append(
-        "otherDeduction",
-        otherDeduction ? String(otherDeduction) : "0"
-      );
-      formData.append("totalDeduction", String(totalDeduction));
-      formData.append("netPayable", String(netPayable));
-      formData.append("status", status || "");
-      formData.append(
-        "amountPaidByClient",
-        amountPaid ? String(amountPaid) : "0"
-      );
-      if (paymentDate)
-        formData.append("paymentDate", paymentDate.toISOString().split("T")[0]);
-      formData.append("balance", String(balance));
-      formData.append("remarks", remarks || "");
-      if (selectedFile) {
-        formData.append("document", selectedFile);
-      }
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value !== undefined) formData.append(key, value as string);
+      });
+      if (invoiceCopy) formData.append("invoiceCopy", invoiceCopy);
+      if (proofOfSubmission) formData.append("proofOfSubmission", proofOfSubmission);
+      if (supportingDocs) formData.append("supportingDocs", supportingDocs);
 
       if (initialValues?.id) {
-        // For update, you may want to use FormData as well if supporting file update
         res = await axios.put(`${baseEndpoint}/${initialValues.id}`, formData, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         notifySuccess("Invoice updated successfully ✅");
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         res = await axios.post(baseEndpoint, formData, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
@@ -319,6 +392,8 @@ export default function InvoiceForm({
     }
   };
 
+  // Disable submit if status is Paid and balance is not 0
+  const isPaidAndBalanceNotZero = isPaid && balance !== 0;
   const isSubmitDisabled =
     loading ||
     !project ||
@@ -328,10 +403,12 @@ export default function InvoiceForm({
     !billCategory ||
     !invoiceNumber ||
     !invoiceDate ||
-    !submissionDate ||
     !basicAmount ||
     !gstPercentage ||
-    !status;
+    !status ||
+    isPaidAndBalanceNotZero ||
+    !invoiceCopy ||
+    !proofOfSubmission;
 
   return (
     <Box pos="relative">
@@ -371,6 +448,7 @@ export default function InvoiceForm({
                     onChange={setMode}
                     required
                     styles={dropdownStyles}
+                    disabled
                   />
                 </Group>
 
@@ -414,6 +492,7 @@ export default function InvoiceForm({
                     value={invoiceDate}
                     onChange={(v) => setInvoiceDate(v ? new Date(v) : null)}
                     required
+                    maxDate={new Date()}
                   />
                 </Group>
 
@@ -422,8 +501,14 @@ export default function InvoiceForm({
                     label="Submission Date"
                     value={submissionDate}
                     onChange={(v) => setSubmissionDate(v ? new Date(v) : null)}
-                    minDate={invoiceDate || undefined}
-                    required
+                    minDate={(() => {
+                      if (!invoiceDate) return undefined;
+                      const d = new Date(invoiceDate);
+                      d.setDate(d.getDate());
+                      return d;
+                    })()}
+                    maxDate={new Date()}
+                    // required
                     disabled={!invoiceDate}
                   />
                   <NumberInput
@@ -467,34 +552,62 @@ export default function InvoiceForm({
                   }
                   disabled
                 />
-                <FileInput
-                  label="Invoice Document"
-                  description="Upload PDF / Image (Max 5MB)"
-                  placeholder="Click to upload file"
-                  color="#000000"
-                  value={selectedFile}
-                  onChange={setSelectedFile}
-                  clearable
-                  leftSection={<IconUpload size={18} />}
-                  radius="md"
-                  size="md"
-                  style={{ marginTop: 16, maxWidth: 340 }}
-                  styles={{
-                    input: {
-                      backgroundColor: "#F8FAFC",
-                      border: "1px dashed #CBD5E1",
-                      cursor: "pointer",
-                      color: "#000000",
-                      fontWeight: 500,
-                      "&::placeholder": {
-                        color: "#64748B",
-                      },
-                    },
-                    label: {
-                      fontWeight: 600,
-                    },
-                  }}
-                />
+                <Divider label="Invoice Documents" labelPosition="left" mt="xs" />
+                <Stack gap="xs" style={{ maxWidth: 400 }}>
+                  <FileInput
+                    label="Invoice Copy"
+                    description={
+                      existingInvoiceCopy && !invoiceCopy
+                        ? `Current: ${existingInvoiceCopy.split(/[\\/]/).pop()}`
+                        : "Upload PDF file (Max 5 MB)"
+                    }
+                    placeholder="Click to upload PDF file"
+                    color="#000000"
+                    value={invoiceCopy}
+                    onChange={setInvoiceCopy}
+                    clearable
+                    leftSection={<IconUpload size={18} />}
+                    radius="md"
+                    size="md"
+                    required
+                    accept=".pdf"
+                  />
+                  <FileInput
+                    label="Proof of Submission"
+                    description={
+                      existingProofOfSubmission && !proofOfSubmission
+                        ? `Current: ${existingProofOfSubmission.split(/[\\/]/).pop()}`
+                        : "Upload PDF file (Max 5 MB)"
+                    }
+                    placeholder="Click to upload PDF file"
+                    color="#000000"
+                    value={proofOfSubmission}
+                    onChange={setProofOfSubmission}
+                    clearable
+                    leftSection={<IconUpload size={18} />}
+                    radius="md"
+                    size="md"
+                    required
+                    accept=".pdf"
+                  />
+                  <FileInput
+                    label="Supporting Documents"
+                    description={
+                      existingSupportingDocs && !supportingDocs
+                        ? `Current: ${existingSupportingDocs.split(/[\\/]/).pop()}`
+                        : "Upload PDF file (Max 5 MB)"
+                    }
+                    placeholder="Click to upload PDF file"
+                    color="#000000"
+                    value={supportingDocs}
+                    onChange={setSupportingDocs}
+                    clearable
+                    leftSection={<IconUpload size={18} />}
+                    radius="md"
+                    size="md"
+                    accept=".pdf"
+                  />
+                </Stack>
 
                 <Divider
                   label="Status & Remarks"
@@ -503,7 +616,10 @@ export default function InvoiceForm({
                 />
                 <Select
                   label="Status"
-                  data={statuses}
+                  data={statuses.map(s => ({
+                    value: s,
+                    label: s.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
+                  }))}
                   value={status}
                   onChange={setStatus}
                   required
@@ -661,7 +777,19 @@ export default function InvoiceForm({
                       label="Payment Date"
                       value={paymentDate}
                       onChange={(v) => setPaymentDate(v ? new Date(v) : null)}
-                      minDate={submissionDate || undefined}
+                      minDate={(() => {
+                        if (submissionDate) {
+                          const d = new Date(submissionDate);
+                          d.setDate(d.getDate() + 1);
+                          return d;
+                        } else if (invoiceDate) {
+                          const d = new Date(invoiceDate);
+                          d.setDate(d.getDate() + 1);
+                          return d;
+                        }
+                        return undefined;
+                      })()}
+                      maxDate={new Date()}
                       required
                     />
                   </Group>
@@ -673,7 +801,11 @@ export default function InvoiceForm({
                         : Number(balance.toFixed(2))
                     }
                     disabled
-                    error={balance > 0}
+                    error={
+                      isPaid && balance !== 0
+                        ? "Net Payable should be equal to Amount Paid by Client"
+                        : false
+                    }
                   />
                 </Stack>
               </Grid.Col>

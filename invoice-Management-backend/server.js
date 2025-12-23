@@ -4,6 +4,7 @@ import cors from "cors";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
 import userInvoiceRoutes from "./routes/userInvoiceRoutes.js"; 
 import authRoutes from "./routes/authRoutes.js"; 
+import fileRoutes from "./routes/fileRoutes.js";
 import { authMiddleware } from "./authMiddleware.js";
 import { authorizeRoles } from "./authorizeRoles.js";
 
@@ -13,8 +14,13 @@ const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 
 // ✅ Middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5174",
+  credentials: true
+}));
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // simple request logger
 app.use((req, res, next) => {
   try {
@@ -27,6 +33,9 @@ app.use((req, res, next) => {
 
 // ✅ Auth routes (no middleware here)
 app.use("/api/v1/auth", authRoutes);
+
+// ✅ File serving route (public, no auth)
+app.use("/api/v1/files", fileRoutes);
 
 // ✅ Admin invoices (only Admins)
 app.use(

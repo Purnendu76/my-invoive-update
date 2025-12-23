@@ -12,6 +12,9 @@ import InvoiceDetails from "../pages/InvoiceDetails";
 import SelectedStatus from "../pages/selectedStatus";
 import { AddProject } from "../pages/projects";
 import { Project } from "../components/project";
+import Dashboard2 from "../pages/dashboard-2";
+import SelectGst from "../pages/select-gst";
+import Overdue from "../pages/overdue";
 const routes: RouteObject[] = [
   { path: "/", element: <Auth /> },
   { path: "/register", element: <Register /> },
@@ -24,6 +27,14 @@ const routes: RouteObject[] = [
         element: (
           <PrivateRoute allowedRoles={["Admin", "user"]}>
             <Dashboard />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/dashboard-2",
+        element: (
+          <PrivateRoute allowedRoles={["Admin", "user"]}>
+            <Dashboard2 />
           </PrivateRoute>
         ),
       },
@@ -64,9 +75,9 @@ const routes: RouteObject[] = [
       {
        path: "/user-invoice/:invoiceNumber",
         element: (
-       
+          <PrivateRoute allowedRoles={["user", "Admin"]}>
             <InvoiceDetails />
-        
+          </PrivateRoute>
         )
       },
       {
@@ -95,10 +106,26 @@ const routes: RouteObject[] = [
         ),
       },
       {
+        path:"/select-gst",
+        element: (
+          <PrivateRoute allowedRoles={["Admin"]}>
+            <SelectGst />
+          </PrivateRoute>
+        ),
+      },
+      {
         path: "/project/:projectName",
         element: (
           <PrivateRoute allowedRoles={["Admin"]}>
             <Project />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/overdue",
+        element: (
+          <PrivateRoute allowedRoles={["Admin", "user"]}>
+            <Overdue />
           </PrivateRoute>
         ),
       }

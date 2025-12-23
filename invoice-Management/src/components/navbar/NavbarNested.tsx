@@ -6,7 +6,7 @@ import {
   IconLogout,
   IconUsers,
 } from "@tabler/icons-react";
-import { Title, Tooltip, UnstyledButton, Button,  } from "@mantine/core";
+import { Title, Tooltip, UnstyledButton, Button, Image  } from "@mantine/core";
 import { MantineLogo } from "@mantinex/mantine-logo";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import classes from "./DoubleNavbar.module.css";
@@ -33,6 +33,7 @@ export default function NavbarNested() {
   const user = parseJwt(token); // ✅ Decode token
   const userName = user?.name || "User";
   const userRole = user?.role || "Guest";
+  const projectRole = user?.projectRole || (user?.role==="Admin" ? "Admin" : "No project assigned");
 
   // Set to true to hide the entire left aside (logo + icon bar)
   const hideAside = true;
@@ -48,7 +49,8 @@ const handleLogout = () => {
 
   // ✅ Filter links based on role
   const mainLinksData = [
-    { icon: IconGauge, label: "Dashboard", path: "/dashboard" },
+    // { icon: IconGauge, label: "Dashboard", path: "/dashboard" },
+    { icon: IconGauge, label: "Dashboard", path: "/dashboard-2" },
     ...(role === "Admin"
       ? [
           { icon: IconFileInvoice, label: "Admin-Invoice", path: "/admin-invoice" },
@@ -99,11 +101,21 @@ const handleLogout = () => {
     return (
       <NavLink
         to={link.path}
+        key={link.label}
         className={({ isActive }) =>
           `${classes.link} ${isActive ? classes.linkActive : ""}`
         }
-        key={link.label}
-        style={{ display: "flex", alignItems: "center", gap: 8 }}
+        style={({ isActive }) => ({
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          background: isActive ? "#f0f4fa" : undefined,
+          color: isActive ? "#1971c2" : undefined,
+          borderRadius: isActive ? 8 : undefined,
+          fontWeight: isActive ? 600 : undefined,
+          boxShadow: isActive ? "0 1px 4px 0 rgba(25,113,194,0.07)" : undefined,
+          transition: "background 0.2s, color 0.2s"
+        })}
       >
         <Icon size={18} style={{ marginRight: 4 }} />
         {link.label}
@@ -119,16 +131,37 @@ const handleLogout = () => {
             <div className={classes.logo}>
               <MantineLogo type="mark" size={30} />
             </div>
-            {mainLinks}
+             Annu Projects Ltd.
           </div>
         )}
 
         <div className={classes.main} style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-          <div>
-            <Title order={4} className={classes.title} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <MantineLogo type="mark" size={24} style={{ marginRight: 6 }} />
-              {active}
-            </Title>
+          {/* Header Section */}
+          <div style={{
+            padding: "10px",
+            background: "#fff",
+            borderBottom: "1px solid #e3e8ee",
+            marginBottom: 8
+          }}>
+            <div
+              style={{ display: "flex", alignItems: "center", minHeight: 48, cursor: "pointer" }}
+              onClick={() => navigate('/dashboard-2')}
+            >
+              <Image
+                src="https://annuprojects.com/wp-content/uploads/2024/03/logo.png"
+                alt="Annu Logo"
+                height={26}
+                width={26}
+                fit="contain"
+                // radius={8}
+                style={{width: '20%'}}
+              />
+              <span style={{ fontWeight: 500, fontSize: 20, letterSpacing: 0.5, lineHeight: 1 }}>
+                Annu Projects Ltd.
+              </span>
+            </div>
+          </div>
+          <div style={{ padding: "0 1.5rem 0.5rem 1.5rem" }}>
             {links}
           </div>
 
@@ -136,8 +169,8 @@ const handleLogout = () => {
           <div style={{ marginTop: "auto", padding: "1.2rem", textAlign: "center", borderTop: "1px solid #e3e8ee" }}>
             <div style={{ marginBottom: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
               <MantineLogo type="mark" size={28} style={{ marginBottom: 2 }} />
-              <div style={{ fontWeight: 600, fontSize: 16 }}>{userName}</div>
-              <div style={{ fontSize: 12, color: '#91ADC8', marginBottom: 2 }}>{userRole}</div>
+              <div style={{ fontWeight: 600, fontSize: 18 }}>{userName}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#91ADC8', marginBottom: 2 }}>{projectRole}</div>
             </div>
             <Button
               variant="outline"

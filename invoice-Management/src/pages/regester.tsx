@@ -17,9 +17,19 @@ import { IconBrandGoogle, IconBrandGithub } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { notifySuccess, notifyError } from "../lib/utils/notify";
 import axios, { AxiosError } from "axios";
+import { useEffect } from "react";
+import { getUserRole } from "../lib/utils/getUserRole";
 
 export default function Register() {
   const navigate = useNavigate();
+  const user = getUserRole();
+  const allowedRoles = ["Admin", "user"];
+
+  useEffect(() => {
+      if (user && allowedRoles.includes(user)) {
+        navigate("/dashboard-2");
+      }
+    }, [user, navigate]);
 
   const form = useForm({
     initialValues: {
@@ -53,7 +63,7 @@ export default function Register() {
       document.cookie = `user=${encodeURIComponent(JSON.stringify(response.data.user))}; path=/;`;
 
       notifySuccess("Registration successful!");
-      navigate("/dashboard");
+      navigate("/dashboard-2");
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
       console.error("Register error:", error);
@@ -163,16 +173,16 @@ export default function Register() {
                 Already have an account? Sign in
               </Button>
 
-              <Divider label="or continue with" labelPosition="center" />
+              {/* <Divider label="or continue with" labelPosition="center" /> */}
 
-              <Group grow>
+              {/* <Group grow>
                 <Button variant="light" leftSection={<IconBrandGoogle size={20} />}>
                   Google
                 </Button>
                 <Button variant="light" leftSection={<IconBrandGithub size={20} />}>
                   GitHub
                 </Button>
-              </Group>
+              </Group> */}
             </Stack>
           </Center>
         </Box>
